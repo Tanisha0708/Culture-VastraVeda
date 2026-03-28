@@ -1,0 +1,25 @@
+# Compiled output
+out/
+*.class
+
+# Runnable JAR (build it locally)
+VastraVeda.jar
+
+# Source list (generated during build)
+sources.txt
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+*.project
+*.classpath
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
