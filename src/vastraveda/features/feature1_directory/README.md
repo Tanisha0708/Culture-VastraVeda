@@ -1,9 +1,13 @@
- Feature 1 — Recipe Encyclopedia
+# 🗓 Feature 1 — Recipe Encyclopedia
 What This Feature Should Do
 
 Display a structured list of recipes categorized by region, community, and dietary type, with filtering and pagination.
 
- Expected UI Layout
+ ---
+
+## Expected UI Layout
+
+```
  ┌──────────────────────────────────────────────┐
 │  🥗 Recipe Encyclopedia                      │  ← createHeader()
 │  Explore traditional Indian recipes          │
@@ -19,9 +23,13 @@ Display a structured list of recipes categorized by region, community, and dieta
 │  └────────────┘  └────────────┘             │
 ├──────────────────────────────────────────────┤
 │  PAGINATION (1 2 3 ...)                     │
-└──────────────────────────────────────────────┘
+└──────────────────────────────────────────────┘                
 
-✅ Minimum Requirements
+ ```
+
+---
+
+## Minimum Requirements
 Display at least 10 recipes
 Add filters:
 Region
