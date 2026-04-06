@@ -1,11 +1,11 @@
-# ⚖️ Feature 8 — Compare Outfits
+# Feature 8 — Compare Outfits
 
 ## What This Feature Should Do
 Allow users to select two clothing items side-by-side and compare them across all attributes — fabric, region, occasion, era, care, and description.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -30,7 +30,7 @@ Allow users to select two clothing items side-by-side and compare them across al
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **Two dropdowns** — each populated with all `ClothingItem` names from `DataStore`
 2. **Compare button** — triggers the comparison table to render
@@ -41,7 +41,7 @@ Allow users to select two clothing items side-by-side and compare them across al
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature8Service.java

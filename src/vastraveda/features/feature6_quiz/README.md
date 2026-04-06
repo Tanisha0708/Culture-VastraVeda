@@ -1,11 +1,11 @@
-# ❓ Feature 6 — Clothing Quiz
+# Feature 6 — Clothing Quiz
 
 ## What This Feature Should Do
 An interactive multiple-choice quiz that tests the user's knowledge about Indian traditional clothing using data from `DataStore`.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -31,7 +31,7 @@ An interactive multiple-choice quiz that tests the user's knowledge about Indian
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **At least 8 questions** — hardcoded in `Feature6Service`
 2. **4 options per question** — one correct, three wrong

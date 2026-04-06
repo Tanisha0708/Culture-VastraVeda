@@ -1,11 +1,11 @@
-# 🏛 Feature 14 — State Profiles
+# Feature 14 — State Profiles
 
 ## What This Feature Should Do
 A detailed profile page for each Indian state showing its textile identity — signature garments, dominant fabrics, signature colours, and GI-tagged items.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -36,7 +36,7 @@ A detailed profile page for each Indian state showing its textile identity — s
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **State list/dropdown** — show at least 12 Indian states
 2. **State profile panel** with sections: Signature Colours, GI Items, Signature Garments, About, Weaving Centres
@@ -65,7 +65,7 @@ A detailed profile page for each Indian state showing its textile identity — s
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature14Service.java
@@ -84,7 +84,7 @@ public class Feature14Service {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - Colour swatches: small `JPanel` of size `24×24` with `setBackground(Color.decode(hex))`
 - State list: `JList` with single selection, `ListSelectionListener` → load profile
 - GI badge: small `JLabel` with gold border and "🏷 GI Tagged" text

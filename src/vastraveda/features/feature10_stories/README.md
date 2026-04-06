@@ -1,11 +1,11 @@
-# 📖 Feature 10 — Cultural Stories
+# Feature 10 — Cultural Stories
 
 ## What This Feature Should Do
 Display the rich cultural stories, legends, and historical origin tales behind iconic Indian garments. A reading-focused feature with a story list on the left and a reading pane on the right.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -29,7 +29,7 @@ Display the rich cultural stories, legends, and historical origin tales behind i
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **Story list** on the left — JList with item names and icons
 2. **Reading pane** on the right — JTextArea (non-editable, word-wrapped) with the story
@@ -39,7 +39,7 @@ Display the rich cultural stories, legends, and historical origin tales behind i
 
 ---
 
-## 📚 Stories to Include (hardcode in Feature10Service.java)
+## Stories to Include (hardcode in Feature10Service.java)
 
 | Item | Story Angle |
 |------|------------|
@@ -53,7 +53,7 @@ Display the rich cultural stories, legends, and historical origin tales behind i
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature10Service.java
@@ -70,7 +70,7 @@ public class Feature10Service {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - JSplitPane(HORIZONTAL_SPLIT) with divider at 220px
 - Reading pane font: new Font("Serif", Font.PLAIN, 14)
 - Background: new Color(255, 252, 240) — warm parchment feel

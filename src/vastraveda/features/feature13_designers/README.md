@@ -1,11 +1,11 @@
-# ✂️ Feature 13 — Featured Designers & Artisans
+# Feature 13 — Featured Designers & Artisans
 
 ## What This Feature Should Do
 Spotlight the master weavers, artisans, and designers who keep Indian textile traditions alive. Each profile card includes the artisan's craft, region, and the clothing item they're known for.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -29,7 +29,7 @@ Spotlight the master weavers, artisans, and designers who keep Indian textile tr
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **Profile cards** in a `GridLayout(0, 2)` or `(0, 3)` — at least 8 artisan profiles
 2. **Filter by region** dropdown — shows artisans from selected state
@@ -39,7 +39,7 @@ Spotlight the master weavers, artisans, and designers who keep Indian textile tr
 
 ---
 
-## 👨‍🎨 Artisan Profiles to Create (hardcode in Feature13Service.java)
+## Artisan Profiles to Create (hardcode in Feature13Service.java)
 
 | Name | Title | Region | Craft | Bio |
 |------|-------|--------|-------|-----|
@@ -54,7 +54,7 @@ Spotlight the master weavers, artisans, and designers who keep Indian textile tr
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature13Service.java
@@ -75,7 +75,7 @@ public class Feature13Service {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - Avatar: large emoji (👨‍🎨 or 👩‍🎨) in 32pt font, center-aligned at top of card
 - Card: fixed size `280 × 200` px, cream background, left border accent by craft type
 - Craft color coding: Weaving=gold, Embroidery=red, Dyeing=blue, Knitting=green

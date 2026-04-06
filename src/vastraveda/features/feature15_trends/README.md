@@ -1,11 +1,11 @@
-# 🌟 Feature 15 — Modern Trends
+# Feature 15 — Modern Trends
 
 ## What This Feature Should Do
 Showcase how traditional Indian clothing has influenced contemporary fashion — from Bollywood to global runways. Show "traditional vs modern" comparisons and fusion trend cards.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -31,7 +31,7 @@ Showcase how traditional Indian clothing has influenced contemporary fashion —
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **3 category tabs** — Traditional Roots / Modern Interpretations / Global Influence
 2. **At least 8 trend cards** — each linking a traditional item to its modern avatar
@@ -41,7 +41,7 @@ Showcase how traditional Indian clothing has influenced contemporary fashion —
 
 ---
 
-## 🌟 Trends to Include (hardcode in Feature15Service.java)
+## Trends to Include (hardcode in Feature15Service.java)
 
 | Trend Title | Traditional Root | Modern Interpretation | Global Moment |
 |-------------|-----------------|----------------------|---------------|
@@ -56,7 +56,7 @@ Showcase how traditional Indian clothing has influenced contemporary fashion —
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature15Service.java
@@ -76,7 +76,7 @@ public class Feature15Service {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - Trend card: large panel with a two-column layout (Traditional left | Modern right)
 - Separator arrow "→" in the center: big bold font, COLOR_SECONDARY
 - Tab categories: use JTabbedPane — Traditional (warm brown), Modern (teal), Global (purple)

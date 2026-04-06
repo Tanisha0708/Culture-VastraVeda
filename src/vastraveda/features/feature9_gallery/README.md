@@ -1,11 +1,11 @@
-# 🖼 Feature 9 — Visual Gallery
+# Feature 9 — Visual Gallery
 
 ## What This Feature Should Do
 A visually rich card gallery showing all clothing items as large cards with their emoji icon, name, region tag, and quick stats. Clicking a card opens a full detail view.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -29,7 +29,7 @@ A visually rich card gallery showing all clothing items as large cards with thei
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **Grid view** — `GridLayout(0, 3)` showing all items as cards — this is the default view
 2. **List view** — toggle to show items as horizontal rows (like Feature 1's table, but styled)
@@ -40,7 +40,7 @@ A visually rich card gallery showing all clothing items as large cards with thei
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature9Service.java
@@ -81,7 +81,7 @@ public class Feature9UI extends BaseUI implements Feature {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - Card size: fixed `200 × 220` px using `setPreferredSize(new Dimension(200, 220))`
 - Card background: alternate between `COLOR_CARD` and `new Color(255, 252, 240)`
 - Icon font size: `new Font("Serif", Font.PLAIN, 42)` — big and central

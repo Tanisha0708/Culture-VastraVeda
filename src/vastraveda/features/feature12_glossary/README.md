@@ -1,11 +1,11 @@
-# 📚 Feature 12 — Glossary
+# Feature 12 — Glossary
 
 ## What This Feature Should Do
 An A–Z dictionary of Indian textile and clothing terms. Users can browse alphabetically, search by keyword, or click a term to see its full definition.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -32,7 +32,7 @@ An A–Z dictionary of Indian textile and clothing terms. Users can browse alpha
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **A–Z alphabet bar** — clicking a letter filters the list to terms starting with that letter
 2. **Search bar** — live search filters the term list as user types
@@ -42,7 +42,7 @@ An A–Z dictionary of Indian textile and clothing terms. Users can browse alpha
 
 ---
 
-## 📖 Terms to Include (hardcode in Feature12Service.java — at least 25)
+## Terms to Include (hardcode in Feature12Service.java — at least 25)
 
 | Term | Definition |
 |------|-----------|
@@ -74,7 +74,7 @@ An A–Z dictionary of Indian textile and clothing terms. Users can browse alpha
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature12Service.java
@@ -89,7 +89,7 @@ public class Feature12Service {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - Alphabet bar: `FlowLayout` row of small `JButton`s, each 28×28px
 - Active letter button: highlighted with `COLOR_PRIMARY` background
 - Term list: `JList<String>` with `ListSelectionListener` → update definition panel

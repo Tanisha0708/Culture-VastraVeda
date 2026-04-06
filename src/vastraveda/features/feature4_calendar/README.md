@@ -5,7 +5,7 @@ Display a seasonal calendar showing which Indian festivals happen throughout the
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -26,7 +26,7 @@ Display a seasonal calendar showing which Indian festivals happen throughout the
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **Season Tabs or Buttons** — at least 4 categories (Spring/Summer/Autumn/Winter OR Jan-Mar / Apr-Jun / Jul-Sep / Oct-Dec)
 2. **Festival List** — show at least 8 festivals with: name, month, region, and 1-line description
@@ -54,7 +54,7 @@ Display a seasonal calendar showing which Indian festivals happen throughout the
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature4Service.java — store festival data here
@@ -74,7 +74,7 @@ public class Feature4UI extends BaseUI implements Feature {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - Use `BaseUI.COLOR_BG`, `COLOR_PRIMARY`, `COLOR_SECONDARY` for consistency
 - Use `createHeader()` for the top bar
 - Each festival card: accent color based on season (spring=green, summer=orange, autumn=red, winter=blue)

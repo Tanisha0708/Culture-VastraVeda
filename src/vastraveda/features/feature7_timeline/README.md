@@ -1,11 +1,11 @@
-# 📜 Feature 7 — Historical Timeline
+# Feature 7 — Historical Timeline
 
 ## What This Feature Should Do
 Display a vertical scrollable timeline showing how Indian clothing evolved from the Vedic period to modern day, with relevant garments from `DataStore` linked to each era.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -32,7 +32,7 @@ Display a vertical scrollable timeline showing how Indian clothing evolved from 
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **At least 5 historical eras** displayed on the timeline
 2. **Era selector** on the left (JList or buttons) — clicking jumps to that era
@@ -56,7 +56,7 @@ Display a vertical scrollable timeline showing how Indian clothing evolved from 
 
 ---
 
-## 💻 Code Structure Expected
+## Code Structure Expected
 
 ```java
 // Feature7Service.java

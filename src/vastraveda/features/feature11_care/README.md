@@ -1,11 +1,11 @@
-# 🧺 Feature 11 — Care & Maintenance
+# Feature 11 — Care & Maintenance
 
 ## What This Feature Should Do
 Teach users how to properly care for their traditional Indian garments, grouped by fabric type with washing symbols, storage tips, and do's & don'ts.
 
 ---
 
-## 📐 Expected UI Layout
+## Expected UI Layout
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -36,7 +36,7 @@ Teach users how to properly care for their traditional Indian garments, grouped 
 
 ---
 
-## ✅ Minimum Requirements
+## Minimum Requirements
 
 1. **Fabric sidebar** — clickable list of fabrics (Silk, Cotton, Wool, Pashmina, Brocade, Linen)
 2. **Care panel** — for each fabric show: Do's list, Don'ts list, Storage tip, Wash symbol
@@ -46,7 +46,7 @@ Teach users how to properly care for their traditional Indian garments, grouped 
 
 ---
 
-## 🧼 Care Data to Include (hardcode in Feature11Service.java)
+## Care Data to Include (hardcode in Feature11Service.java)
 
 | Fabric | Wash | Do's | Don'ts | Storage |
 |--------|------|------|--------|---------|
@@ -74,7 +74,7 @@ public class Feature11Service {
 
 ---
 
-## 🎨 UI Style Tips
+## UI Style Tips
 - Do's section: light green background panel, ✅ prefix on each bullet
 - Don'ts section: light red background panel, ❌ prefix on each bullet
 - Storage tip: light blue background with 📦 icon

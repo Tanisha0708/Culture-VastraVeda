@@ -311,4 +311,3 @@ MIT License — Free to use, fork, and build upon.
 
 ---
 
-*Built with ❤️ for the Indian open-source community · 🇮🇳 Jai Hind*
