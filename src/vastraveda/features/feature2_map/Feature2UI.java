@@ -3,11 +3,12 @@ package vastraveda.features.feature2_map;
 import vastraveda.core.models.ClothingItem;
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.utils.FilterUtils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * ╔══════════════════════════════════════════════════════╗
@@ -23,6 +24,9 @@ public class Feature2UI extends BaseUI implements Feature {
 
     private JPanel resultPanel;
     private JLabel selectedStateLabel;
+    private JPanel mapCanvas;
+    private JButton activeRegionButton;
+    private final Map<String, JButton> regionButtons = new HashMap<>();
     private final Feature2Service service = new Feature2Service();
 
     public Feature2UI() {
@@ -59,47 +63,17 @@ public class Feature2UI extends BaseUI implements Feature {
         mapTitle.setForeground(COLOR_PRIMARY);
         mapTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
 
-        // Grid of state buttons styled like a simplified map
-        JPanel grid = new JPanel(new GridLayout(0, 2, 8, 8));
-        grid.setOpaque(false);
+        mapCanvas = new JPanel(null);
+        mapCanvas.setOpaque(true);
+        mapCanvas.setBackground(new Color(251, 244, 232));
+        mapCanvas.setPreferredSize(new Dimension(430, 400));
 
-        String[] regions = {
-            "Punjab", "Rajasthan", "Uttar Pradesh", "Kashmir",
-            "Gujarat", "Maharashtra", "West Bengal", "Assam",
-            "Tamil Nadu", "Kerala", "Telangana", "Manipur",
-            "Odisha", "Karnataka", "Goa", "Bihar"
-        };
-
-        Color[] regionColors = {
-            new Color(255, 160, 80),  new Color(220, 100, 60),
-            new Color(180, 120, 200), new Color(100, 160, 220),
-            new Color(255, 180, 60),  new Color(120, 180, 120),
-            new Color(200, 100, 160), new Color(80, 180, 200),
-            new Color(200, 140, 80),  new Color(100, 200, 160),
-            new Color(160, 100, 200), new Color(180, 200, 80),
-            new Color(220, 120, 120), new Color(80, 160, 200),
-            new Color(220, 200, 80),  new Color(160, 140, 100)
-        };
-
-        for (int i = 0; i < regions.length; i++) {
-            final String region = regions[i];
-            final Color col = regionColors[i % regionColors.length];
-
-            JButton btn = new JButton(region);
-            btn.setFont(new Font("SansSerif", Font.BOLD, 11));
-            btn.setBackground(col);
-            btn.setForeground(Color.WHITE);
-            btn.setFocusPainted(false);
-            btn.setBorderPainted(false);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setPreferredSize(new Dimension(130, 36));
-            btn.addActionListener(e -> showRegion(region, col));
-            grid.add(btn);
-        }
+        drawRegionButtons();
 
         outer.add(mapTitle, BorderLayout.NORTH);
-        outer.add(new JScrollPane(grid) {{
-            setBorder(null); getViewport().setOpaque(false); setOpaque(false);
+        outer.add(new JScrollPane(mapCanvas) {{
+            setBorder(BorderFactory.createLineBorder(COLOR_BORDER));
+            getViewport().setBackground(new Color(251, 244, 232));
         }}, BorderLayout.CENTER);
 
         return outer;
@@ -110,7 +84,7 @@ public class Feature2UI extends BaseUI implements Feature {
         outer.setBackground(COLOR_BG);
         outer.setBorder(BorderFactory.createEmptyBorder(12, 6, 12, 12));
 
-        selectedStateLabel = new JLabel("← Select a region to begin", JLabel.CENTER);
+        selectedStateLabel = new JLabel("← Select a region/state to explore clothing", JLabel.CENTER);
         selectedStateLabel.setFont(FONT_SUBTITLE);
         selectedStateLabel.setForeground(COLOR_PRIMARY);
         selectedStateLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
@@ -128,12 +102,59 @@ public class Feature2UI extends BaseUI implements Feature {
         return outer;
     }
 
+    private void drawRegionButtons() {
+        Color[] regionColors = {
+            new Color(255, 160, 80), new Color(220, 100, 60), new Color(180, 120, 200),
+            new Color(100, 160, 220), new Color(255, 180, 60), new Color(120, 180, 120),
+            new Color(200, 100, 160), new Color(80, 180, 200), new Color(200, 140, 80)
+        };
+
+        int idx = 0;
+        for (Feature2Service.MapRegion region : service.getMapRegions()) {
+            String name = region.getName();
+            Color col = regionColors[idx % regionColors.length];
+            JButton btn = createRegionButton(name, col);
+            btn.setBounds(region.getX(), region.getY(), 110, 30);
+            btn.addActionListener(e -> showRegion(name, col));
+            regionButtons.put(name, btn);
+            mapCanvas.add(btn);
+            idx++;
+        }
+    }
+
+    private JButton createRegionButton(String name, Color color) {
+        JButton btn = new JButton(name);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 11));
+        btn.setBackground(color);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText("Click to view clothing from " + name);
+        return btn;
+    }
+
+    private void highlightButton(String region) {
+        if (activeRegionButton != null) {
+            activeRegionButton.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        }
+        JButton btn = regionButtons.get(region);
+        if (btn != null) {
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BG_DARK, 2),
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)
+            ));
+            activeRegionButton = btn;
+        }
+    }
+
     private void showRegion(String region, Color accent) {
+        highlightButton(region);
         selectedStateLabel.setText("📍 " + region);
         selectedStateLabel.setForeground(accent);
         resultPanel.removeAll();
 
-        List<ClothingItem> items = FilterUtils.filterByRegion(region);
+        List<ClothingItem> items = service.getTopItemsByRegion(region, 12);
 
         if (items.isEmpty()) {
             JLabel none = new JLabel("No items found for " + region, JLabel.CENTER);
@@ -158,6 +179,7 @@ public class Feature2UI extends BaseUI implements Feature {
             BorderFactory.createEmptyBorder(10, 12, 10, 12)
         ));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JLabel icon = new JLabel(item.getImageIcon(), JLabel.CENTER);
         icon.setFont(new Font("Serif", Font.PLAIN, 28));
@@ -183,6 +205,38 @@ public class Feature2UI extends BaseUI implements Feature {
 
         card.add(icon, BorderLayout.WEST);
         card.add(text, BorderLayout.CENTER);
+
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                openItemPopup(item);
+            }
+        });
         return card;
+    }
+
+    private void openItemPopup(ClothingItem item) {
+        JTextArea area = new JTextArea(
+            "Name: " + item.getName() + "\n" +
+            "Region: " + item.getRegion() + "\n" +
+            "Fabric: " + item.getFabricType() + "\n" +
+            "Occasion: " + item.getOccasion() + "\n" +
+            "Gender: " + item.getGender() + "\n\n" +
+            item.getDescription()
+        );
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setFont(FONT_BODY);
+        area.setBackground(COLOR_CARD);
+        area.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        area.setPreferredSize(new Dimension(420, 220));
+
+        JOptionPane.showMessageDialog(
+            this,
+            new JScrollPane(area),
+            item.getImageIcon() + " " + item.getName(),
+            JOptionPane.PLAIN_MESSAGE
+        );
     }
 }
