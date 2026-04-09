@@ -107,8 +107,14 @@ public class Feature14UI extends BaseUI implements Feature {
 
     private void showStateProfile(String state) {
         detailPanel.removeAll();
+        Feature14Service.StateProfile profile = service.getStateProfile(state);
+        if (profile == null) {
+            detailPanel.add(new JLabel("Profile unavailable for " + state));
+            detailPanel.revalidate();
+            detailPanel.repaint();
+            return;
+        }
 
-        // State heading
         JLabel heading = new JLabel(service.getStateEmoji(state) + "  " + state);
         heading.setFont(new Font("Segoe UI Emoji", Font.BOLD, 22));
         heading.setForeground(COLOR_PRIMARY);
@@ -116,29 +122,57 @@ public class Feature14UI extends BaseUI implements Feature {
         detailPanel.add(heading);
         detailPanel.add(Box.createVerticalStrut(12));
 
-        // Fact card
+        JLabel region = new JLabel("📍 Region: " + profile.getRegion());
+        region.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        region.setForeground(COLOR_TEXT);
+        region.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(region);
+        detailPanel.add(Box.createVerticalStrut(10));
+
+        JLabel coloursHeading = sectionHeading("Signature Colours");
+        detailPanel.add(coloursHeading);
+        detailPanel.add(Box.createVerticalStrut(6));
+        detailPanel.add(buildColourSwatches(profile.getSignatureColours()));
+        detailPanel.add(Box.createVerticalStrut(10));
+
+        JLabel giHeading = sectionHeading("GI-Tagged Heritage Items");
+        detailPanel.add(giHeading);
+        detailPanel.add(Box.createVerticalStrut(6));
+        detailPanel.add(buildGiItems(profile.getGiItems()));
+        detailPanel.add(Box.createVerticalStrut(10));
+
+        JLabel garmentHeading = sectionHeading("Signature Garments");
+        detailPanel.add(garmentHeading);
+        detailPanel.add(Box.createVerticalStrut(6));
+        detailPanel.add(buildChipRow(profile.getSignatureGarments(), COLOR_PRIMARY));
+        detailPanel.add(Box.createVerticalStrut(10));
+
+        JLabel fabricHeading = sectionHeading("Dominant Fabrics");
+        detailPanel.add(fabricHeading);
+        detailPanel.add(Box.createVerticalStrut(6));
+        detailPanel.add(buildChipRow(profile.getDominantFabrics(), new Color(120, 80, 40)));
+        detailPanel.add(Box.createVerticalStrut(10));
+
+        JLabel weavingHeading = sectionHeading("Famous Weaving Centres");
+        detailPanel.add(weavingHeading);
+        detailPanel.add(Box.createVerticalStrut(6));
+        detailPanel.add(buildChipRow(profile.getWeavingCentres(), new Color(70, 110, 90)));
+        detailPanel.add(Box.createVerticalStrut(14));
+
         JPanel factCard = new JPanel(new BorderLayout());
         factCard.setBackground(new Color(255, 248, 235));
         factCard.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(COLOR_BORDER),
                 BorderFactory.createEmptyBorder(12, 14, 12, 14)));
         factCard.setAlignmentX(Component.LEFT_ALIGNMENT);
-        factCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        factCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
         JLabel factText = new JLabel("<html><body style='width:400px'>"
-                + service.getStateFact(state) + "</body></html>");
+                + profile.getAbout() + "</body></html>");
         factText.setFont(new Font("Segoe UI", Font.ITALIC, 13));
         factText.setForeground(COLOR_TEXT);
         factCard.add(factText, BorderLayout.CENTER);
         detailPanel.add(factCard);
-        detailPanel.add(Box.createVerticalStrut(16));
-
-        // Garments heading
-        JLabel garmentsHeading = new JLabel("Traditional Garments");
-        garmentsHeading.setFont(new Font("Segoe UI", Font.BOLD, 15));
-        garmentsHeading.setForeground(COLOR_TEXT);
-        garmentsHeading.setAlignmentX(Component.LEFT_ALIGNMENT);
-        detailPanel.add(garmentsHeading);
         detailPanel.add(Box.createVerticalStrut(8));
 
         List<ClothingItem> items = service.getGarmentsByState(state);
@@ -164,6 +198,81 @@ public class Feature14UI extends BaseUI implements Feature {
         detailPanel.add(Box.createVerticalGlue());
         detailPanel.revalidate();
         detailPanel.repaint();
+    }
+
+    private JLabel sectionHeading(String text) {
+        JLabel heading = new JLabel(text);
+        heading.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        heading.setForeground(COLOR_TEXT);
+        heading.setAlignmentX(Component.LEFT_ALIGNMENT);
+        return heading;
+    }
+
+    private JPanel buildColourSwatches(List<String> colourHex) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        panel.setBackground(COLOR_BG);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 38));
+
+        for (String hex : colourHex) {
+            JPanel swatch = new JPanel();
+            swatch.setPreferredSize(new Dimension(24, 24));
+            swatch.setBackground(parseColor(hex));
+            swatch.setBorder(BorderFactory.createLineBorder(new Color(60, 40, 20)));
+            swatch.setToolTipText(hex);
+            panel.add(swatch);
+        }
+        return panel;
+    }
+
+    private JPanel buildGiItems(List<String> giItems) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        panel.setBackground(COLOR_BG);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+
+        for (String item : giItems) {
+            JLabel badge = new JLabel("🏷 GI Tagged: " + item);
+            badge.setFont(new Font("Segoe UI Emoji", Font.BOLD, 12));
+            badge.setForeground(new Color(120, 80, 20));
+            badge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 160, 70)),
+                BorderFactory.createEmptyBorder(4, 8, 4, 8)
+            ));
+            badge.setBackground(new Color(255, 250, 225));
+            badge.setOpaque(true);
+            panel.add(badge);
+        }
+        return panel;
+    }
+
+    private JPanel buildChipRow(List<String> values, Color borderColor) {
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        panel.setBackground(COLOR_BG);
+        panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        panel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+
+        for (String value : values) {
+            JLabel chip = new JLabel(value);
+            chip.setFont(new Font("Segoe UI", Font.PLAIN, 12));
+            chip.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(borderColor),
+                BorderFactory.createEmptyBorder(4, 8, 4, 8)
+            ));
+            chip.setOpaque(true);
+            chip.setBackground(COLOR_CARD);
+            chip.setForeground(COLOR_TEXT);
+            panel.add(chip);
+        }
+        return panel;
+    }
+
+    private Color parseColor(String hex) {
+        try {
+            return Color.decode(hex);
+        } catch (NumberFormatException ex) {
+            return Color.LIGHT_GRAY;
+        }
     }
 
     private JPanel buildGarmentCard(ClothingItem item) {
