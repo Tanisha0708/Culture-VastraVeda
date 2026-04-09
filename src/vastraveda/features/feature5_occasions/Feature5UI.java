@@ -1,31 +1,13 @@
 package vastraveda.features.feature5_occasions;
 
+import vastraveda.core.models.ClothingItem;
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.data.DataStore;
-import vastraveda.core.models.ClothingItem;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * ╔══════════════════════════════════════════════════════════════════╗
- * ║  FEATURE 5 — Occasion Guide                                        ║
- * ║  CONTRIBUTOR: Your Name (@github_handle)                         ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📋 WHAT TO BUILD:                                              ║
- * ║  • Show clickable occasion buttons: Wedding, Festival, Religious, Formal, Casual, Dance.║
- * ║  • Clicking filters DataStore items by occasion and renders result cards.║
- * ║  • Show a styling tip panel below results (hardcode tips in Feature5Service).║
- * ║  • Use FilterUtils.filterByOccasion() and GridLayout(0,2) for card grid.║
- * ║  • See README.md in this folder for tip text and layout diagram.║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📁 ONLY MODIFY THESE FILES IN THIS FOLDER:                     ║
- * ║     Feature5UI.java       ← Your Swing UI code here              ║
- * ║     Feature5Service.java  ← Your data/logic here                ║
- * ║     README.md               ← Full spec + layout diagram        ║
- * ╚══════════════════════════════════════════════════════════════════╝
- */
 public class Feature5UI extends BaseUI implements Feature {
 
     private final Feature5Service service = new Feature5Service();
@@ -42,42 +24,94 @@ public class Feature5UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("🎊  Occasion Guide", "Find the right outfit for weddings, religious ceremonies, and more."), BorderLayout.NORTH);
+        add(createHeader("🎊 Occasion Guide", "Dress right for every event"), BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(COLOR_BG);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        JTabbedPane tabs = new JTabbedPane();
+        tabs.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        tabs.setBackground(COLOR_BG);
+        tabs.setForeground(COLOR_TEXT);
 
-        JLabel placeholder = new JLabel("<html><center>" +
-            "<span style='font-size:36px'>🎊</span><br><br>" +
-            "<b style='font-size:16px'>Occasion Guide</b><br><br>" +
-            "<span style='color:gray'>Find the right outfit for weddings, religious ceremonies, and more.</span><br><br>" +
-            "<span style='color:#8B4513'>" + DataStore.getAllItems().size() + " items in the data store</span>" +
-            "</center></html>", JLabel.CENTER);
-        placeholder.setFont(FONT_BODY);
+        List<String> occasions = service.getAllOccasions();
+        for (String occasion : occasions) {
+            tabs.addTab(occasion, buildOccasionPanel(occasion));
+        }
 
-        JButton exploreBtn = createStyledButton("Explore " + DataStore.getAllItems().size() + " Items", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        exploreBtn.addActionListener(e -> showItemList());
-
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnRow.setOpaque(false);
-        btnRow.add(exploreBtn);
-
-        content.add(placeholder, BorderLayout.CENTER);
-        content.add(btnRow, BorderLayout.SOUTH);
-        add(content, BorderLayout.CENTER);
+        add(tabs, BorderLayout.CENTER);
     }
 
-    private void showItemList() {
-        List<ClothingItem> items = DataStore.getAllItems();
-        StringBuilder sb = new StringBuilder("All Clothing Items:\n\n");
-        for (ClothingItem item : items) {
-            sb.append(item.getImageIcon()).append(" ").append(item.getName())
-              .append(" — ").append(item.getRegion()).append("\n");
+    private JPanel buildOccasionPanel(String occasion) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(COLOR_BG);
+
+        // Description card at top
+        JPanel descCard = createCard();
+        descCard.setLayout(new BorderLayout());
+        descCard.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
+        descCard.setBackground(new Color(255, 248, 235));
+
+        JLabel descLabel = new JLabel("<html><body style='width:500px'>"
+                + service.getOccasionDescription(occasion) + "</body></html>");
+        descLabel.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+        descLabel.setForeground(COLOR_TEXT);
+        descCard.add(descLabel, BorderLayout.CENTER);
+
+        JPanel topWrapper = new JPanel(new BorderLayout());
+        topWrapper.setBackground(COLOR_BG);
+        topWrapper.setBorder(BorderFactory.createEmptyBorder(12, 12, 6, 12));
+        topWrapper.add(descCard, BorderLayout.CENTER);
+
+        // Garment cards
+        List<ClothingItem> items = service.getByOccasion(occasion);
+        JPanel garmentGrid = new JPanel(new GridLayout(0, 2, 10, 10));
+        garmentGrid.setBackground(COLOR_BG);
+        garmentGrid.setBorder(BorderFactory.createEmptyBorder(10, 12, 12, 12));
+
+        if (items.isEmpty()) {
+            JLabel noItems = new JLabel("No garments found for this occasion.", SwingConstants.CENTER);
+            noItems.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+            noItems.setForeground(COLOR_TEXT);
+            garmentGrid.add(noItems);
+        } else {
+            for (ClothingItem item : items) {
+                garmentGrid.add(buildItemCard(item));
+            }
         }
-        JTextArea area = new JTextArea(sb.toString());
-        area.setFont(FONT_BODY);
-        area.setEditable(false);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Occasion Guide", JOptionPane.PLAIN_MESSAGE);
+
+        JScrollPane scroll = new JScrollPane(garmentGrid);
+        scroll.setBorder(null);
+        scroll.getViewport().setBackground(COLOR_BG);
+        scroll.getVerticalScrollBar().setUnitIncrement(16);
+
+        panel.add(topWrapper, BorderLayout.NORTH);
+        panel.add(scroll, BorderLayout.CENTER);
+
+        return panel;
+    }
+
+    private JPanel buildItemCard(ClothingItem item) {
+        JPanel card = createCard();
+        card.setLayout(new BorderLayout(8, 0));
+        card.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
+
+        // Icon + name row
+        JPanel topRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        topRow.setBackground(COLOR_CARD);
+        JLabel icon = new JLabel(item.getImageIcon());
+        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 22));
+        JLabel name = new JLabel(item.getName());
+        name.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        name.setForeground(COLOR_TEXT);
+        topRow.add(icon);
+        topRow.add(name);
+
+        // Details
+        JLabel details = new JLabel(item.getRegion() + " · " + item.getFabricType() + " · " + item.getGender());
+        details.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        details.setForeground(COLOR_PRIMARY);
+
+        card.add(topRow, BorderLayout.NORTH);
+        card.add(details, BorderLayout.SOUTH);
+
+        return card;
     }
 }
