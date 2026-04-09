@@ -2,23 +2,33 @@ package vastraveda.features.feature3_fabric;
 
 import java.util.HashMap;
 import java.util.Map;
+import vastraveda.core.data.DataStore;
+import vastraveda.core.models.ClothingItem;
 
-/**
- * Feature 3 — Fabric Service
- */
 public class Feature3Service {
 
-    private static final Map<String, String> CARE_TIPS = new HashMap<>();
-    static {
-        CARE_TIPS.put("Silk",     "Dry clean only. Store in muslin cloth. Avoid direct sunlight.");
-        CARE_TIPS.put("Cotton",   "Machine wash cold. Iron at medium heat. Air dry preferred.");
-        CARE_TIPS.put("Wool",     "Dry clean or hand wash in cold water. Lay flat to dry.");
-        CARE_TIPS.put("Linen",    "Machine wash cool. Iron while damp. Avoid wringing.");
-        CARE_TIPS.put("Brocade",  "Dry clean only. Handle with care to preserve zari work.");
-        CARE_TIPS.put("Pashmina", "Dry clean only. Fold, do not hang. Use cedar balls for storage.");
-    }
+    public Map<String, String> getFabricSpread() {
 
-    public String getCareTip(String fabric) {
-        return CARE_TIPS.getOrDefault(fabric, "Follow garment label instructions.");
+        Map<String, String> spreadMap = new HashMap<>();
+        Map<String, StringBuilder> temp = new HashMap<>();
+
+        for (ClothingItem item : DataStore.getAllItems()) {
+
+            String fabric = item.getFabricType().split("/")[0].trim();
+            String region = item.getRegion();
+
+            temp.putIfAbsent(fabric, new StringBuilder());
+
+            if (!temp.get(fabric).toString().contains(region)) {
+                temp.get(fabric).append(region).append(", ");
+            }
+        }
+
+        for (String fabric : temp.keySet()) {
+            String value = temp.get(fabric).toString();
+            spreadMap.put(fabric, value.substring(0, value.length() - 2));
+        }
+
+        return spreadMap;
     }
 }
