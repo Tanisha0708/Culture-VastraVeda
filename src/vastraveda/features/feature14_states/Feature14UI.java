@@ -1,34 +1,18 @@
 package vastraveda.features.feature14_states;
 
+import vastraveda.core.models.ClothingItem;
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.data.DataStore;
-import vastraveda.core.models.ClothingItem;
+
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.List;
 
-/**
- * ╔══════════════════════════════════════════════════════════════════╗
- * ║  FEATURE 14 — State Profiles                                        ║
- * ║  CONTRIBUTOR: Your Name (@github_handle)                         ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📋 WHAT TO BUILD:                                              ║
- * ║  • Left: JList of 12 Indian states. Right: scrollable state profile panel.║
- * ║  • Profile shows: garments, colour swatches (painted JPanels), GI tags, about text.║
- * ║  • Use FilterUtils.filterByRegion(state) to pull related DataStore items.║
- * ║  • Colour swatches: JPanel(24x24) with setBackground(Color.decode(hex)).║
- * ║  • See README.md in this folder for all 12 state profiles and data.║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📁 ONLY MODIFY THESE FILES IN THIS FOLDER:                     ║
- * ║     Feature14UI.java       ← Your Swing UI code here              ║
- * ║     Feature14Service.java  ← Your data/logic here                ║
- * ║     README.md               ← Full spec + layout diagram        ║
- * ╚══════════════════════════════════════════════════════════════════╝
- */
 public class Feature14UI extends BaseUI implements Feature {
 
     private final Feature14Service service = new Feature14Service();
+    private JPanel detailPanel;
 
     public Feature14UI() {
         super("State Profiles");
@@ -42,42 +26,187 @@ public class Feature14UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("🏛  State Profiles", "Explore clothing traditions of each Indian state."), BorderLayout.NORTH);
+        add(createHeader("🏛 State Profiles", "Clothing of every Indian state"), BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(COLOR_BG);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        // Left: state list
+        List<String> states = service.getAllStates();
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (String s : states) listModel.addElement(s);
 
-        JLabel placeholder = new JLabel("<html><center>" +
-            "<span style='font-size:36px'>🏛</span><br><br>" +
-            "<b style='font-size:16px'>State Profiles</b><br><br>" +
-            "<span style='color:gray'>Explore clothing traditions of each Indian state.</span><br><br>" +
-            "<span style='color:#8B4513'>" + DataStore.getAllItems().size() + " items in the data store</span>" +
-            "</center></html>", JLabel.CENTER);
-        placeholder.setFont(FONT_BODY);
+        JList<String> stateList = new JList<>(listModel);
+        stateList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        stateList.setForeground(COLOR_TEXT);
+        stateList.setBackground(COLOR_BG);
+        stateList.setSelectionBackground(COLOR_PRIMARY);
+        stateList.setSelectionForeground(COLOR_TEXT_LIGHT);
+        stateList.setFixedCellHeight(40);
+        stateList.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
 
-        JButton exploreBtn = createStyledButton("Explore " + DataStore.getAllItems().size() + " Items", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        exploreBtn.addActionListener(e -> showItemList());
+        // Custom cell renderer to show emoji + state name
+        stateList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public java.awt.Component getListCellRendererComponent(
+                    JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                String state = (String) value;
+                setText(service.getStateEmoji(state) + "  " + state);
+                setFont(new Font("Segoe UI Emoji", Font.PLAIN, 13));
+                setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+                if (isSelected) {
+                    setBackground(COLOR_PRIMARY);
+                    setForeground(COLOR_TEXT_LIGHT);
+                } else {
+                    setBackground(COLOR_BG);
+                    setForeground(COLOR_TEXT);
+                }
+                return this;
+            }
+        });
 
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnRow.setOpaque(false);
-        btnRow.add(exploreBtn);
+        JScrollPane leftScroll = new JScrollPane(stateList);
+        leftScroll.setPreferredSize(new Dimension(220, 0));
+        leftScroll.setBorder(BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER),
+                "States / Regions",
+                TitledBorder.LEFT, TitledBorder.TOP,
+                new Font("Segoe UI", Font.BOLD, 12), COLOR_PRIMARY));
 
-        content.add(placeholder, BorderLayout.CENTER);
-        content.add(btnRow, BorderLayout.SOUTH);
-        add(content, BorderLayout.CENTER);
+        // Right: detail panel
+        detailPanel = new JPanel();
+        detailPanel.setLayout(new BoxLayout(detailPanel, BoxLayout.Y_AXIS));
+        detailPanel.setBackground(COLOR_BG);
+        detailPanel.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+
+        JLabel placeholder = new JLabel("← Select a state to see its clothing profile");
+        placeholder.setFont(new Font("Segoe UI", Font.ITALIC, 14));
+        placeholder.setForeground(COLOR_TEXT);
+        placeholder.setAlignmentX(Component.CENTER_ALIGNMENT);
+        detailPanel.add(Box.createVerticalGlue());
+        detailPanel.add(placeholder);
+        detailPanel.add(Box.createVerticalGlue());
+
+        JScrollPane rightScroll = new JScrollPane(detailPanel);
+        rightScroll.setBorder(BorderFactory.createLineBorder(COLOR_BORDER));
+        rightScroll.getViewport().setBackground(COLOR_BG);
+        rightScroll.getVerticalScrollBar().setUnitIncrement(16);
+
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScroll, rightScroll);
+        split.setDividerLocation(240);
+        split.setBackground(COLOR_BG);
+        add(split, BorderLayout.CENTER);
+
+        stateList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && stateList.getSelectedValue() != null) {
+                showStateProfile(stateList.getSelectedValue());
+            }
+        });
+
+        if (!states.isEmpty()) stateList.setSelectedIndex(0);
     }
 
-    private void showItemList() {
-        List<ClothingItem> items = DataStore.getAllItems();
-        StringBuilder sb = new StringBuilder("All Clothing Items:\n\n");
-        for (ClothingItem item : items) {
-            sb.append(item.getImageIcon()).append(" ").append(item.getName())
-              .append(" — ").append(item.getRegion()).append("\n");
+    private void showStateProfile(String state) {
+        detailPanel.removeAll();
+
+        // State heading
+        JLabel heading = new JLabel(service.getStateEmoji(state) + "  " + state);
+        heading.setFont(new Font("Segoe UI Emoji", Font.BOLD, 22));
+        heading.setForeground(COLOR_PRIMARY);
+        heading.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(heading);
+        detailPanel.add(Box.createVerticalStrut(12));
+
+        // Fact card
+        JPanel factCard = new JPanel(new BorderLayout());
+        factCard.setBackground(new Color(255, 248, 235));
+        factCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER),
+                BorderFactory.createEmptyBorder(12, 14, 12, 14)));
+        factCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        factCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+
+        JLabel factText = new JLabel("<html><body style='width:400px'>"
+                + service.getStateFact(state) + "</body></html>");
+        factText.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+        factText.setForeground(COLOR_TEXT);
+        factCard.add(factText, BorderLayout.CENTER);
+        detailPanel.add(factCard);
+        detailPanel.add(Box.createVerticalStrut(16));
+
+        // Garments heading
+        JLabel garmentsHeading = new JLabel("Traditional Garments");
+        garmentsHeading.setFont(new Font("Segoe UI", Font.BOLD, 15));
+        garmentsHeading.setForeground(COLOR_TEXT);
+        garmentsHeading.setAlignmentX(Component.LEFT_ALIGNMENT);
+        detailPanel.add(garmentsHeading);
+        detailPanel.add(Box.createVerticalStrut(8));
+
+        List<ClothingItem> items = service.getGarmentsByState(state);
+
+        if (items.isEmpty()) {
+            JPanel emptyCard = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            emptyCard.setBackground(COLOR_CARD);
+            emptyCard.setBorder(BorderFactory.createLineBorder(COLOR_BORDER));
+            emptyCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+            emptyCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+            JLabel none = new JLabel("No garments catalogued for this region yet.");
+            none.setFont(new Font("Segoe UI", Font.ITALIC, 13));
+            none.setForeground(COLOR_TEXT);
+            emptyCard.add(none);
+            detailPanel.add(emptyCard);
+        } else {
+            for (ClothingItem item : items) {
+                detailPanel.add(buildGarmentCard(item));
+                detailPanel.add(Box.createVerticalStrut(8));
+            }
         }
-        JTextArea area = new JTextArea(sb.toString());
-        area.setFont(FONT_BODY);
-        area.setEditable(false);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "State Profiles", JOptionPane.PLAIN_MESSAGE);
+
+        detailPanel.add(Box.createVerticalGlue());
+        detailPanel.revalidate();
+        detailPanel.repaint();
+    }
+
+    private JPanel buildGarmentCard(ClothingItem item) {
+        JPanel card = createCard();
+        card.setLayout(new BorderLayout(12, 0));
+        card.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
+        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+
+        // Icon
+        JLabel icon = new JLabel(item.getImageIcon());
+        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+        icon.setPreferredSize(new Dimension(44, 44));
+
+        // Details
+        JPanel textPanel = new JPanel(new GridLayout(3, 1, 0, 3));
+        textPanel.setBackground(COLOR_CARD);
+
+        JLabel name = new JLabel(item.getName());
+        name.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        name.setForeground(COLOR_TEXT);
+
+        JLabel meta = new JLabel(item.getFabricType() + "  ·  " + item.getOccasion() + "  ·  " + item.getGender());
+        meta.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        meta.setForeground(COLOR_PRIMARY);
+
+        JLabel desc = new JLabel("<html><body style='width:350px'>" + item.getDescription() + "</body></html>");
+        desc.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        desc.setForeground(new Color(80, 60, 40));
+
+        textPanel.add(name);
+        textPanel.add(meta);
+        textPanel.add(desc);
+
+        // Care badge
+        JLabel care = new JLabel("🧺 " + item.getCareInstructions());
+        care.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 11));
+        care.setForeground(new Color(100, 70, 30));
+
+        card.add(icon, BorderLayout.WEST);
+        card.add(textPanel, BorderLayout.CENTER);
+        card.add(care, BorderLayout.SOUTH);
+
+        return card;
     }
 }
