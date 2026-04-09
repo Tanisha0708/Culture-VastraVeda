@@ -30,17 +30,42 @@ public class Feature14UI extends BaseUI implements Feature {
 
         // Left: state list
         List<String> states = service.getAllStates();
-        JList<String> stateList = new JList<>(states.toArray(new String[0]));
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        for (String s : states) listModel.addElement(s);
+
+        JList<String> stateList = new JList<>(listModel);
         stateList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         stateList.setForeground(COLOR_TEXT);
         stateList.setBackground(COLOR_BG);
         stateList.setSelectionBackground(COLOR_PRIMARY);
         stateList.setSelectionForeground(COLOR_TEXT_LIGHT);
-        stateList.setFixedCellHeight(36);
+        stateList.setFixedCellHeight(40);
         stateList.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
 
+        // Custom cell renderer to show emoji + state name
+        stateList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public java.awt.Component getListCellRendererComponent(
+                    JList<?> list, Object value, int index,
+                    boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                String state = (String) value;
+                setText(service.getStateEmoji(state) + "  " + state);
+                setFont(new Font("Segoe UI Emoji", Font.PLAIN, 13));
+                setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+                if (isSelected) {
+                    setBackground(COLOR_PRIMARY);
+                    setForeground(COLOR_TEXT_LIGHT);
+                } else {
+                    setBackground(COLOR_BG);
+                    setForeground(COLOR_TEXT);
+                }
+                return this;
+            }
+        });
+
         JScrollPane leftScroll = new JScrollPane(stateList);
-        leftScroll.setPreferredSize(new Dimension(200, 0));
+        leftScroll.setPreferredSize(new Dimension(220, 0));
         leftScroll.setBorder(BorderFactory.createTitledBorder(
                 BorderFactory.createLineBorder(COLOR_BORDER),
                 "States / Regions",
@@ -67,55 +92,50 @@ public class Feature14UI extends BaseUI implements Feature {
         rightScroll.getVerticalScrollBar().setUnitIncrement(16);
 
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScroll, rightScroll);
-        split.setDividerLocation(220);
+        split.setDividerLocation(240);
         split.setBackground(COLOR_BG);
         add(split, BorderLayout.CENTER);
 
-        // Selection listener
         stateList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting() && stateList.getSelectedValue() != null) {
                 showStateProfile(stateList.getSelectedValue());
             }
         });
 
-        // Auto-select first state
-        if (!states.isEmpty()) {
-            stateList.setSelectedIndex(0);
-        }
+        if (!states.isEmpty()) stateList.setSelectedIndex(0);
     }
 
     private void showStateProfile(String state) {
         detailPanel.removeAll();
-        detailPanel.setLayout(new BoxLayout(detailPanel, BoxLayout.Y_AXIS));
 
         // State heading
-        JLabel heading = new JLabel("🏛 " + state);
-        heading.setFont(new Font("Segoe UI Emoji", Font.BOLD, 20));
+        JLabel heading = new JLabel(service.getStateEmoji(state) + "  " + state);
+        heading.setFont(new Font("Segoe UI Emoji", Font.BOLD, 22));
         heading.setForeground(COLOR_PRIMARY);
         heading.setAlignmentX(Component.LEFT_ALIGNMENT);
         detailPanel.add(heading);
-        detailPanel.add(Box.createVerticalStrut(10));
+        detailPanel.add(Box.createVerticalStrut(12));
 
         // Fact card
-        JPanel factCard = createCard();
-        factCard.setLayout(new BorderLayout());
+        JPanel factCard = new JPanel(new BorderLayout());
         factCard.setBackground(new Color(255, 248, 235));
-        factCard.setBorder(BorderFactory.createEmptyBorder(10, 14, 10, 14));
-        factCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+        factCard.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BORDER),
+                BorderFactory.createEmptyBorder(12, 14, 12, 14)));
         factCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+        factCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
 
-        JTextArea factText = createTextArea(service.getStateFact(state));
-        factText.setLineWrap(true);
-        factText.setWrapStyleWord(true);
+        JLabel factText = new JLabel("<html><body style='width:400px'>"
+                + service.getStateFact(state) + "</body></html>");
         factText.setFont(new Font("Segoe UI", Font.ITALIC, 13));
-        factText.setBackground(new Color(255, 248, 235));
+        factText.setForeground(COLOR_TEXT);
         factCard.add(factText, BorderLayout.CENTER);
         detailPanel.add(factCard);
         detailPanel.add(Box.createVerticalStrut(16));
 
         // Garments heading
         JLabel garmentsHeading = new JLabel("Traditional Garments");
-        garmentsHeading.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        garmentsHeading.setFont(new Font("Segoe UI", Font.BOLD, 15));
         garmentsHeading.setForeground(COLOR_TEXT);
         garmentsHeading.setAlignmentX(Component.LEFT_ALIGNMENT);
         detailPanel.add(garmentsHeading);
@@ -124,14 +144,19 @@ public class Feature14UI extends BaseUI implements Feature {
         List<ClothingItem> items = service.getGarmentsByState(state);
 
         if (items.isEmpty()) {
+            JPanel emptyCard = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            emptyCard.setBackground(COLOR_CARD);
+            emptyCard.setBorder(BorderFactory.createLineBorder(COLOR_BORDER));
+            emptyCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+            emptyCard.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
             JLabel none = new JLabel("No garments catalogued for this region yet.");
             none.setFont(new Font("Segoe UI", Font.ITALIC, 13));
             none.setForeground(COLOR_TEXT);
-            none.setAlignmentX(Component.LEFT_ALIGNMENT);
-            detailPanel.add(none);
+            emptyCard.add(none);
+            detailPanel.add(emptyCard);
         } else {
             for (ClothingItem item : items) {
-                detailPanel.add(buildGarmentRow(item));
+                detailPanel.add(buildGarmentCard(item));
                 detailPanel.add(Box.createVerticalStrut(8));
             }
         }
@@ -141,31 +166,31 @@ public class Feature14UI extends BaseUI implements Feature {
         detailPanel.repaint();
     }
 
-    private JPanel buildGarmentRow(ClothingItem item) {
+    private JPanel buildGarmentCard(ClothingItem item) {
         JPanel card = createCard();
-        card.setLayout(new BorderLayout(10, 0));
-        card.setBorder(BorderFactory.createEmptyBorder(10, 12, 10, 12));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        card.setLayout(new BorderLayout(12, 0));
+        card.setBorder(BorderFactory.createEmptyBorder(12, 14, 12, 14));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
 
-        // Left: icon
+        // Icon
         JLabel icon = new JLabel(item.getImageIcon());
-        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
-        icon.setPreferredSize(new Dimension(40, 40));
+        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 32));
+        icon.setPreferredSize(new Dimension(44, 44));
 
-        // Right: details
-        JPanel textPanel = new JPanel(new GridLayout(3, 1, 0, 2));
+        // Details
+        JPanel textPanel = new JPanel(new GridLayout(3, 1, 0, 3));
         textPanel.setBackground(COLOR_CARD);
 
         JLabel name = new JLabel(item.getName());
-        name.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        name.setFont(new Font("Segoe UI", Font.BOLD, 14));
         name.setForeground(COLOR_TEXT);
 
-        JLabel meta = new JLabel(item.getFabricType() + " · " + item.getOccasion() + " · " + item.getGender());
+        JLabel meta = new JLabel(item.getFabricType() + "  ·  " + item.getOccasion() + "  ·  " + item.getGender());
         meta.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         meta.setForeground(COLOR_PRIMARY);
 
-        JLabel desc = new JLabel("<html>" + item.getDescription() + "</html>");
+        JLabel desc = new JLabel("<html><body style='width:350px'>" + item.getDescription() + "</body></html>");
         desc.setFont(new Font("Segoe UI", Font.PLAIN, 11));
         desc.setForeground(new Color(80, 60, 40));
 
@@ -173,8 +198,15 @@ public class Feature14UI extends BaseUI implements Feature {
         textPanel.add(meta);
         textPanel.add(desc);
 
+        // Care badge
+        JLabel care = new JLabel("🧺 " + item.getCareInstructions());
+        care.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 11));
+        care.setForeground(new Color(100, 70, 30));
+
         card.add(icon, BorderLayout.WEST);
         card.add(textPanel, BorderLayout.CENTER);
+        card.add(care, BorderLayout.SOUTH);
+
         return card;
     }
 }
