@@ -16,6 +16,7 @@ public class Feature8UI extends BaseUI implements Feature {
     private JComboBox<String> comboA;
     private JComboBox<String> comboB;
     private JPanel comparePanel;
+    private String[] garmentNames;
 
     public Feature8UI() {
         super("Compare Outfits");
@@ -37,33 +38,38 @@ public class Feature8UI extends BaseUI implements Feature {
         selectorPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
 
         List<ClothingItem> items = service.getAllItems();
-        String[] names = items.stream().map(ClothingItem::getName).toArray(String[]::new);
+        garmentNames = items.stream().map(ClothingItem::getName).toArray(String[]::new);
 
         JLabel labelA = new JLabel("Garment A:");
         labelA.setFont(new Font("Segoe UI", Font.BOLD, 13));
         labelA.setForeground(COLOR_TEXT);
 
-        comboA = createComboBox(names);
+        comboA = createComboBox(garmentNames);
         comboA.setPreferredSize(new Dimension(220, 30));
 
         JLabel labelB = new JLabel("Garment B:");
         labelB.setFont(new Font("Segoe UI", Font.BOLD, 13));
         labelB.setForeground(COLOR_TEXT);
 
-        comboB = createComboBox(names);
+        comboB = createComboBox(garmentNames);
         comboB.setPreferredSize(new Dimension(220, 30));
         // Default second selection to a different item
-        if (names.length > 1) comboB.setSelectedIndex(1);
+        if (garmentNames.length > 1) comboB.setSelectedIndex(1);
 
         JButton compareBtn = createStyledButton("Compare ⚖️", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
         compareBtn.setPreferredSize(new Dimension(130, 32));
         compareBtn.addActionListener(e -> runComparison());
+
+        JButton resetBtn = createStyledButton("Reset", COLOR_BORDER, COLOR_TEXT);
+        resetBtn.setPreferredSize(new Dimension(100, 32));
+        resetBtn.addActionListener(e -> resetComparison());
 
         selectorPanel.add(labelA);
         selectorPanel.add(comboA);
         selectorPanel.add(labelB);
         selectorPanel.add(comboB);
         selectorPanel.add(compareBtn);
+        selectorPanel.add(resetBtn);
 
         // Legend
         JPanel legend = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 6));
@@ -166,8 +172,6 @@ public class Feature8UI extends BaseUI implements Feature {
         });
 
         comparePanel.add(headerRow, BorderLayout.NORTH);
-        comparePanel.add(table.getTableHeader(), BorderLayout.BEFORE_FIRST_LINE);
-
         JScrollPane tableScroll = new JScrollPane(table);
         tableScroll.setBorder(BorderFactory.createLineBorder(COLOR_BORDER));
         tableScroll.getViewport().setBackground(COLOR_BG);
@@ -212,6 +216,22 @@ public class Feature8UI extends BaseUI implements Feature {
         msg.setFont(new Font("Segoe UI", Font.ITALIC, 14));
         msg.setForeground(COLOR_TEXT);
         comparePanel.add(msg, BorderLayout.CENTER);
+        comparePanel.revalidate();
+        comparePanel.repaint();
+    }
+
+    private void resetComparison() {
+        if (garmentNames == null || garmentNames.length == 0) {
+            showPlaceholder();
+            return;
+        }
+        comboA.setSelectedIndex(0);
+        if (garmentNames.length > 1) {
+            comboB.setSelectedIndex(1);
+        } else {
+            comboB.setSelectedIndex(0);
+        }
+        showPlaceholder();
     }
 
     private JPanel legendDot(Color color, String label) {

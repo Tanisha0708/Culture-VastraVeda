@@ -19,6 +19,7 @@ import vastraveda.features.feature12_glossary.Feature12UI;
 import vastraveda.features.feature13_designers.Feature13UI;
 import vastraveda.features.feature14_states.Feature14UI;
 import vastraveda.features.feature15_trends.Feature15UI;
+import vastraveda.features.feature16_fabricorigins.Feature16UI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +54,7 @@ public class MainApp extends JFrame {
         { "13", "✂️",  "Featured Designers",   "Artisans keeping craft alive",         "#6D4C41" },
         { "14", "🏛",  "State Profiles",        "Clothing of every Indian state",      "#283593" },
         { "15", "🌟",  "Modern Trends",         "Traditional meets contemporary",      "#880E4F" },
+        { "16", "🧭",  "Fabric Origins Tracker","Trace origin & spread across India",  "#1A4D8F" },
     };
 
     public MainApp() {
@@ -100,7 +102,7 @@ public class MainApp extends JFrame {
         // Stats bar
         JPanel stats = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 0));
         stats.setOpaque(false);
-        stats.add(makeStat("15", "Features"));
+        stats.add(makeStat("16", "Features"));
         stats.add(makeStat("15", "Garments"));
         stats.add(makeStat("12", "Regions"));
 
@@ -133,7 +135,7 @@ public class MainApp extends JFrame {
 
     // ── Feature Grid ─────────────────────────────────────────────────
     private JScrollPane buildFeatureGrid() {
-        JPanel grid = new JPanel(new GridLayout(3, 5, 14, 14));
+        JPanel grid = new JPanel(new GridLayout(4, 4, 14, 14));
         grid.setBackground(new Color(35, 18, 6));
         grid.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
 
@@ -251,6 +253,7 @@ public class MainApp extends JFrame {
             case "13": feature = new Feature13UI(); break;
             case "14": feature = new Feature14UI(); break;
             case "15": feature = new Feature15UI(); break;
+            case "16": feature = new Feature16UI(); break;
             default:
                 JOptionPane.showMessageDialog(this,
                     "Feature " + featureNumber + " not yet implemented.",
