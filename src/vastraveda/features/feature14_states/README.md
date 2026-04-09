@@ -1,3 +1,6 @@
+Problem Statement - India's diverse textile traditions — spanning handlooms, embroidery styles, regional costumes, and fabric origins across states — are largely undocumented in a unified digital space. There is no community-driven mobile app that helps people identify, explore, and preserve India's clothing culture across regions, communities, and generations.
+
+
 # Feature 14 — State Profiles
 
 ## What This Feature Should Do

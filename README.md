@@ -1,4 +1,6 @@
 # 🥻 VastraVeda — वस्त्र-वेद
+Problem Statement- India's diverse textile traditions — spanning handlooms, embroidery styles, regional costumes, and fabric origins across states — are largely undocumented in a unified digital space. There is no community-driven mobile app that helps people identify, explore, and preserve India's clothing culture across regions, communities, and generations.
+
 ### The Encyclopedia of Traditional Indian Clothing
 > *A modular Java Swing application built for open-source collaborative events*
 
