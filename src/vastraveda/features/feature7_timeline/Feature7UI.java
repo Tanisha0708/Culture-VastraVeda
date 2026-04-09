@@ -2,82 +2,112 @@ package vastraveda.features.feature7_timeline;
 
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.data.DataStore;
 import vastraveda.core.models.ClothingItem;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.util.List;
 
-/**
- * ╔══════════════════════════════════════════════════════════════════╗
- * ║  FEATURE 7 — Historical Timeline                                   ║
- * ║  CONTRIBUTOR: Your Name (@github_handle)                         ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📋 WHAT TO BUILD:                                              ║
- * ║  • Vertical scrollable timeline of 5+ Indian clothing eras.  ║
- * ║  • Left: JList era selector. Right: JScrollPane with stacked era cards.║
- * ║  • Each card: era name, time period, description + matching DataStore items.║
- * ║  • Match items using item.getEra() field. Color-accent each era card.║
- * ║  • See README.md in this folder for era data, colors, and layout.║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📁 ONLY MODIFY THESE FILES IN THIS FOLDER:                     ║
- * ║     Feature7UI.java       ← Your Swing UI code here              ║
- * ║     Feature7Service.java  ← Your data/logic here                ║
- * ║     README.md               ← Full spec + layout diagram        ║
- * ╚══════════════════════════════════════════════════════════════════╝
- */
 public class Feature7UI extends BaseUI implements Feature {
 
     private final Feature7Service service = new Feature7Service();
+    private final JPanel displayArea = new JPanel();
 
     public Feature7UI() {
-        super("Historical Timeline");
+        super("VastraVeda — Chronological Archives");
         buildUI();
     }
 
     @Override
-    public void render() {
-        setVisible(true);
-    }
+    public void render() { setVisible(true); }
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("📜  Historical Timeline", "Explore the evolution of Indian clothing across centuries."), BorderLayout.NORTH);
+        
+        // Header using BaseUI helper
+        add(createHeader("📜 Historical Timeline", "Journey through the evolution of Indian textiles."), BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(COLOR_BG);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        // Sidebar: Era Selection List
+        DefaultListModel<String> listModel = new DefaultListModel<>();
+        service.getTimelineEras().forEach(e -> listModel.addElement(e.name));
+        
+        JList<String> eraList = new JList<>(listModel);
+        eraList.setFont(new Font("Serif", Font.BOLD, 16));
+        eraList.setBackground(COLOR_BG_DARK);
+        eraList.setForeground(COLOR_TEXT_LIGHT);
+        eraList.setSelectionBackground(COLOR_ACCENT);
+        eraList.setFixedCellHeight(55);
+        
+        eraList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) updateEraDetails(eraList.getSelectedIndex());
+        });
 
-        JLabel placeholder = new JLabel("<html><center>" +
-            "<span style='font-size:36px'>📜</span><br><br>" +
-            "<b style='font-size:16px'>Historical Timeline</b><br><br>" +
-            "<span style='color:gray'>Explore the evolution of Indian clothing across centuries.</span><br><br>" +
-            "<span style='color:#8B4513'>" + DataStore.getAllItems().size() + " items in the data store</span>" +
-            "</center></html>", JLabel.CENTER);
-        placeholder.setFont(FONT_BODY);
+        // Main Content Area
+        displayArea.setLayout(new BorderLayout());
+        displayArea.setBackground(COLOR_BG);
+        displayArea.setBorder(new EmptyBorder(30, 30, 30, 30));
 
-        JButton exploreBtn = createStyledButton("Explore " + DataStore.getAllItems().size() + " Items", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        exploreBtn.addActionListener(e -> showItemList());
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(eraList), new JScrollPane(displayArea));
+        splitPane.setDividerLocation(200);
+        splitPane.setBorder(null);
+        add(splitPane, BorderLayout.CENTER);
 
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnRow.setOpaque(false);
-        btnRow.add(exploreBtn);
-
-        content.add(placeholder, BorderLayout.CENTER);
-        content.add(btnRow, BorderLayout.SOUTH);
-        add(content, BorderLayout.CENTER);
+        eraList.setSelectedIndex(0); // Default selection
     }
 
-    private void showItemList() {
-        List<ClothingItem> items = DataStore.getAllItems();
-        StringBuilder sb = new StringBuilder("All Clothing Items:\n\n");
-        for (ClothingItem item : items) {
-            sb.append(item.getImageIcon()).append(" ").append(item.getName())
-              .append(" — ").append(item.getRegion()).append("\n");
+    private void updateEraDetails(int index) {
+        displayArea.removeAll();
+        Feature7Service.EraData era = service.getTimelineEras().get(index);
+
+        // 1. Era Header Section
+        JPanel top = new JPanel(new GridLayout(0, 1));
+        top.setOpaque(false);
+        
+        JLabel title = new JLabel(era.name + " (" + era.years + ")");
+        title.setFont(new Font("Serif", Font.BOLD, 28));
+        title.setForeground(COLOR_PRIMARY);
+        
+        JTextArea summary = createTextArea(era.summary);
+        summary.setFont(new Font("Serif", Font.ITALIC, 16));
+        
+        top.add(title);
+        top.add(summary);
+        displayArea.add(top, BorderLayout.NORTH);
+
+        // 2. EXTRA FEATURE: Highlight Box (The "Innovation" Badge)
+        JPanel innovationBox = createCard();
+        innovationBox.setBackground(new Color(255, 245, 220)); // Light cream highlight
+        innovationBox.setLayout(new BorderLayout(10, 10));
+        innovationBox.add(new JLabel("🛠 Landmark Innovation: "), BorderLayout.WEST);
+        innovationBox.add(new JLabel("<html><i>" + era.innovation + "</i></html>"), BorderLayout.CENTER);
+        
+        // 3. Garments Gallery Section
+        JPanel gallery = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 15));
+        gallery.setOpaque(false);
+        gallery.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(COLOR_BORDER), "Cataloged Garments from this Period",
+            TitledBorder.LEFT, TitledBorder.TOP, FONT_BODY, COLOR_TEXT));
+
+        List<ClothingItem> matchingItems = service.getGarmentsForEra(era.name);
+        if (matchingItems.isEmpty()) {
+            gallery.add(new JLabel("No cataloged items found for this specific era filter."));
+        } else {
+            for (ClothingItem item : matchingItems) {
+                JButton itemBtn = createStyledButton(item.getImageIcon() + " " + item.getName(), COLOR_CARD, COLOR_PRIMARY);
+                itemBtn.setToolTipText("Origin: " + item.getRegion());
+                itemBtn.addActionListener(e -> showInfo(item.getName(), item.getDescription()));
+                gallery.add(itemBtn);
+            }
         }
-        JTextArea area = new JTextArea(sb.toString());
-        area.setFont(FONT_BODY);
-        area.setEditable(false);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Historical Timeline", JOptionPane.PLAIN_MESSAGE);
+
+        JPanel centerPanel = new JPanel(new BorderLayout());
+        centerPanel.setOpaque(false);
+        centerPanel.add(innovationBox, BorderLayout.NORTH);
+        centerPanel.add(gallery, BorderLayout.CENTER);
+
+        displayArea.add(centerPanel, BorderLayout.CENTER);
+        displayArea.revalidate();
+        displayArea.repaint();
     }
 }
