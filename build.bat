@@ -25,12 +25,12 @@ mkdir out
 
 REM Find all .java files
 echo ⚙️   Compiling...
-dir /s /b src\*.java > sources.txt
-javac --release 11 -d out @sources.txt
+for /r src %%f in (*.java) do echo %%f >> sources.txt
+javac --release 11 -encoding UTF-8 -d out @sources.txt
 if %ERRORLEVEL% NEQ 0 (
     echo ❌  Compilation failed.
     pause
-    exit /b 1
+    exit /b 1S
 )
 echo ✔  Compiled successfully
 
