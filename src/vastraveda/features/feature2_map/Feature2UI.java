@@ -4,6 +4,9 @@ import vastraveda.core.models.ClothingItem;
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.HashMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -49,6 +52,10 @@ public class Feature2UI extends BaseUI implements Feature {
     private MapCanvas mapCanvas;
     private JPanel resultPanel;
     private JLabel selectedStateLabel;
+    private JPanel mapCanvas;
+    private JButton activeRegionButton;
+    private final Map<String, JButton> regionButtons = new HashMap<>();
+    private final Feature2Service service = new Feature2Service();
     private JLabel selectionMetaLabel;
     private JLabel summaryLabel;
     private JLabel mapHintLabel;
@@ -83,6 +90,28 @@ public class Feature2UI extends BaseUI implements Feature {
     }
 
     private JPanel buildMapPanel() {
+        JPanel outer = new JPanel(new BorderLayout());
+        outer.setBackground(new Color(240, 228, 200));
+        outer.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 6));
+
+        JLabel mapTitle = new JLabel("India — Regions", JLabel.CENTER);
+        mapTitle.setFont(FONT_LABEL);
+        mapTitle.setForeground(COLOR_PRIMARY);
+        mapTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+
+        mapCanvas = new JPanel(null);
+        mapCanvas.setOpaque(true);
+        mapCanvas.setBackground(new Color(251, 244, 232));
+        mapCanvas.setPreferredSize(new Dimension(430, 400));
+
+        drawRegionButtons();
+
+        outer.add(mapTitle, BorderLayout.NORTH);
+        outer.add(new JScrollPane(mapCanvas) {{
+            setBorder(BorderFactory.createLineBorder(COLOR_BORDER));
+            getViewport().setBackground(new Color(251, 244, 232));
+        }}, BorderLayout.CENTER);
+
         JPanel outer = new JPanel(new BorderLayout(0, 14));
         outer.setBackground(COLOR_BG);
         outer.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 10));
@@ -164,6 +193,8 @@ public class Feature2UI extends BaseUI implements Feature {
         textWrap.setOpaque(false);
         textWrap.setLayout(new BoxLayout(textWrap, BoxLayout.Y_AXIS));
 
+        selectedStateLabel = new JLabel("← Select a region/state to explore clothing", JLabel.CENTER);
+        selectedStateLabel.setFont(FONT_SUBTITLE);
         selectedStateLabel = new JLabel("Select a region");
         selectedStateLabel.setFont(FONT_TITLE);
         selectedStateLabel.setForeground(COLOR_PRIMARY);
@@ -208,6 +239,59 @@ public class Feature2UI extends BaseUI implements Feature {
         return outer;
     }
 
+    private void drawRegionButtons() {
+        Color[] regionColors = {
+            new Color(255, 160, 80), new Color(220, 100, 60), new Color(180, 120, 200),
+            new Color(100, 160, 220), new Color(255, 180, 60), new Color(120, 180, 120),
+            new Color(200, 100, 160), new Color(80, 180, 200), new Color(200, 140, 80)
+        };
+
+        int idx = 0;
+        for (Feature2Service.MapRegion region : service.getMapRegions()) {
+            String name = region.getName();
+            Color col = regionColors[idx % regionColors.length];
+            JButton btn = createRegionButton(name, col);
+            btn.setBounds(region.getX(), region.getY(), 110, 30);
+            btn.addActionListener(e -> showRegion(name, col));
+            regionButtons.put(name, btn);
+            mapCanvas.add(btn);
+            idx++;
+        }
+    }
+
+    private JButton createRegionButton(String name, Color color) {
+        JButton btn = new JButton(name);
+        btn.setFont(new Font("SansSerif", Font.BOLD, 11));
+        btn.setBackground(color);
+        btn.setForeground(Color.WHITE);
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText("Click to view clothing from " + name);
+        return btn;
+    }
+
+    private void highlightButton(String region) {
+        if (activeRegionButton != null) {
+            activeRegionButton.setBorder(BorderFactory.createEmptyBorder(6, 8, 6, 8));
+        }
+        JButton btn = regionButtons.get(region);
+        if (btn != null) {
+            btn.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(COLOR_BG_DARK, 2),
+                BorderFactory.createEmptyBorder(4, 6, 4, 6)
+            ));
+            activeRegionButton = btn;
+        }
+    }
+
+    private void showRegion(String region, Color accent) {
+        highlightButton(region);
+        selectedStateLabel.setText("📍 " + region);
+        selectedStateLabel.setForeground(accent);
+        resultPanel.removeAll();
+
+        List<ClothingItem> items = service.getTopItemsByRegion(region, 12);
     private void showRegion(Feature2Service.RegionInfo region) {
         selectedRegion = region;
         mapCanvas.setSelectedRegion(region == null ? null : region.getName());
@@ -324,6 +408,8 @@ public class Feature2UI extends BaseUI implements Feature {
             BorderFactory.createMatteBorder(0, 5, 0, 0, accent),
             BorderFactory.createEmptyBorder(14, 14, 14, 14)
         ));
+        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 190));
 
         JLabel icon = new JLabel(item.getImageIcon(), SwingConstants.CENTER);
@@ -365,9 +451,40 @@ public class Feature2UI extends BaseUI implements Feature {
 
         card.add(icon, BorderLayout.WEST);
         card.add(text, BorderLayout.CENTER);
+
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                openItemPopup(item);
+            }
+        });
         return card;
     }
 
+    private void openItemPopup(ClothingItem item) {
+        JTextArea area = new JTextArea(
+            "Name: " + item.getName() + "\n" +
+            "Region: " + item.getRegion() + "\n" +
+            "Fabric: " + item.getFabricType() + "\n" +
+            "Occasion: " + item.getOccasion() + "\n" +
+            "Gender: " + item.getGender() + "\n\n" +
+            item.getDescription()
+        );
+        area.setEditable(false);
+        area.setLineWrap(true);
+        area.setWrapStyleWord(true);
+        area.setFont(FONT_BODY);
+        area.setBackground(COLOR_CARD);
+        area.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        area.setPreferredSize(new Dimension(420, 220));
+
+        JOptionPane.showMessageDialog(
+            this,
+            new JScrollPane(area),
+            item.getImageIcon() + " " + item.getName(),
+            JOptionPane.PLAIN_MESSAGE
+        );
+    }
     private void openQuickView() {
         if (selectedRegion == null) {
             return;
