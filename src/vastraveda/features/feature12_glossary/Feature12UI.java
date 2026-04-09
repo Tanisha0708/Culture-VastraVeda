@@ -2,36 +2,25 @@ package vastraveda.features.feature12_glossary;
 
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.data.DataStore;
 import vastraveda.core.models.ClothingItem;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * ╔══════════════════════════════════════════════════════════════════╗
- * ║  FEATURE 12 — Glossary                                              ║
- * ║  CONTRIBUTOR: Your Name (@github_handle)                         ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📋 WHAT TO BUILD:                                              ║
- * ║  • A-Z alphabet bar (row of JButtons) + search JTextField at the top.║
- * ║  • JSplitPane: left=JList of sorted terms, right=definition + example panel.║
- * ║  • At least 25 terms hardcoded in Feature12Service using TreeMap (auto-sorted).║
- * ║  • Letter buttons filter list; search field does live filtering.║
- * ║  • See README.md in this folder for the full 25-term glossary list.║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📁 ONLY MODIFY THESE FILES IN THIS FOLDER:                     ║
- * ║     Feature12UI.java       ← Your Swing UI code here              ║
- * ║     Feature12Service.java  ← Your data/logic here                ║
- * ║     README.md               ← Full spec + layout diagram        ║
- * ╚══════════════════════════════════════════════════════════════════╝
- */
 public class Feature12UI extends BaseUI implements Feature {
 
-    private final Feature12Service service = new Feature12Service();
+    private Feature12Service service;
+    private JList<String> termList;
+    private DefaultListModel<String> listModel;
+    private JTextArea meaningArea;
+    private JTextField searchField;
+
+    private List<ClothingItem> currentItems;
 
     public Feature12UI() {
-        super("Glossary");
+        super("Textile Glossary");
+        service = new Feature12Service();
         buildUI();
     }
 
@@ -42,42 +31,97 @@ public class Feature12UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("📚  Glossary", "A dictionary of terms related to Indian textiles and clothing."), BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(COLOR_BG);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        // Header
+        add(createHeader("📚 Textile Glossary", "Explore Indian textile terms"), BorderLayout.NORTH);
 
-        JLabel placeholder = new JLabel("<html><center>" +
-            "<span style='font-size:36px'>📚</span><br><br>" +
-            "<b style='font-size:16px'>Glossary</b><br><br>" +
-            "<span style='color:gray'>A dictionary of terms related to Indian textiles and clothing.</span><br><br>" +
-            "<span style='color:#8B4513'>" + DataStore.getAllItems().size() + " items in the data store</span>" +
-            "</center></html>", JLabel.CENTER);
-        placeholder.setFont(FONT_BODY);
+        // 🔍 Search Panel
+        JPanel topPanel = new JPanel(new BorderLayout());
+        searchField = new JTextField();
+        searchField.setToolTipText("Type to search...");
+        topPanel.add(searchField, BorderLayout.CENTER);
+        add(topPanel, BorderLayout.SOUTH);
 
-        JButton exploreBtn = createStyledButton("Explore " + DataStore.getAllItems().size() + " Items", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        exploreBtn.addActionListener(e -> showItemList());
+        // 🔤 Alphabet Panel
+        JPanel alphabetPanel = new JPanel(new GridLayout(2, 13));
+        for (char c = 'A'; c <= 'Z'; c++) {
+            char letter = c;
+            JButton btn = createStyledButton(String.valueOf(c), COLOR_PRIMARY, COLOR_TEXT_LIGHT);
+            btn.addActionListener(e -> loadItems(service.filterByLetter(letter)));
+            alphabetPanel.add(btn);
+        }
+        add(alphabetPanel, BorderLayout.NORTH);
 
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnRow.setOpaque(false);
-        btnRow.add(exploreBtn);
+        // 📌 Split Layout
+        JSplitPane splitPane = new JSplitPane();
 
-        content.add(placeholder, BorderLayout.CENTER);
-        content.add(btnRow, BorderLayout.SOUTH);
-        add(content, BorderLayout.CENTER);
+        listModel = new DefaultListModel<>();
+        termList = new JList<>(listModel);
+
+        JPanel leftPanel = new JPanel(new BorderLayout());
+        leftPanel.add(new JLabel("📚 Textile Terms"), BorderLayout.NORTH);
+        leftPanel.add(new JScrollPane(termList), BorderLayout.CENTER);
+
+        splitPane.setLeftComponent(leftPanel);
+
+        meaningArea = createTextArea("Select a term to view details...");
+        meaningArea.setFont(new Font("Serif", Font.PLAIN, 16));
+
+        JScrollPane rightScroll = new JScrollPane(meaningArea);
+        splitPane.setRightComponent(rightScroll);
+
+        splitPane.setDividerLocation(250);
+        add(splitPane, BorderLayout.CENTER);
+
+        // Load initial data
+        loadItems(service.getAllItems());
+
+        // 📌 List Selection
+        termList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                int index = termList.getSelectedIndex();
+
+                if (index >= 0 && currentItems != null && index < currentItems.size()) {
+                    ClothingItem item = currentItems.get(index);
+
+                    String details =
+                            "👗 " + item.getName() + "\n\n" +
+                            "📍 Region: " + item.getRegion() + "\n" +
+                            "🧵 Fabric: " + item.getFabricType() + "\n" +
+                            "🎉 Occasion: " + item.getOccasion() + "\n\n" +
+                            "📖 Description:\n" +
+                            item.getDescription() + "\n\n" +
+                            "🧺 Care Tips:\n" +
+                            item.getCareInstructions();
+
+                    meaningArea.setText(details);
+                }
+            }
+        });
+
+        // 🔥 Live Search
+        searchField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                String keyword = searchField.getText();
+                loadItems(service.searchItems(keyword));
+            }
+        });
     }
 
-    private void showItemList() {
-        List<ClothingItem> items = DataStore.getAllItems();
-        StringBuilder sb = new StringBuilder("All Clothing Items:\n\n");
-        for (ClothingItem item : items) {
-            sb.append(item.getImageIcon()).append(" ").append(item.getName())
-              .append(" — ").append(item.getRegion()).append("\n");
+    private void loadItems(List<ClothingItem> items) {
+        currentItems = items;
+        listModel.clear();
+
+        if (items.isEmpty()) {
+            listModel.addElement("No results found");
+            meaningArea.setText("");
+            return;
         }
-        JTextArea area = new JTextArea(sb.toString());
-        area.setFont(FONT_BODY);
-        area.setEditable(false);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Glossary", JOptionPane.PLAIN_MESSAGE);
+
+        for (ClothingItem item : items) {
+            listModel.addElement(item.getImageIcon() + " " + item.getName());
+        }
+
+        meaningArea.setText("Select a term to view details...");
     }
 }
