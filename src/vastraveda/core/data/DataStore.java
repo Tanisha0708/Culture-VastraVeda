@@ -106,6 +106,18 @@ public class DataStore {
             "A wraparound skirt worn by Meitei women of Manipur. Essential for Ras Lila dance performances and cultural ceremonies.",
             "👘", "Ancient Manipuri Tradition", "Hand wash"
         ));
+        items.add(new ClothingItem(
+            "Lal Paar Saree", "West Bengal", "Cotton/Silk",
+            "Festival/Durga Puja", "Female",
+            "The iconic white saree with a red (lal) border worn during Durga Puja and festive mornings in Bengal.",
+            "🥻", "Bengal Tradition", "Hand wash cold"
+        ));
+        items.add(new ClothingItem(
+            "Dhuti", "West Bengal", "Cotton",
+            "Festival/Religious", "Male",
+            "The Bengali drape of the unstitched lower garment, worn with kurta for pujo, weddings, and formal occasions.",
+            "👘", "Bengal Tradition", "Machine wash cold"
+        ));
     }
 
     /** Returns an unmodifiable view of all clothing items. */
