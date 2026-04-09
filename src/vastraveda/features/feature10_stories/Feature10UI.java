@@ -4,31 +4,21 @@ import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
 import vastraveda.core.data.DataStore;
 import vastraveda.core.models.ClothingItem;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 /**
- * ╔══════════════════════════════════════════════════════════════════╗
- * ║  FEATURE 10 — Cultural Stories                                      ║
- * ║  CONTRIBUTOR: Your Name (@github_handle)                         ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📋 WHAT TO BUILD:                                              ║
- * ║  • JSplitPane: left=JList of item names, right=JTextArea story content.║
- * ║  • At least 7 origin stories — one per major ClothingItem.   ║
- * ║  • Hardcode stories in Feature10Service as Map<String, String>.║
- * ║  • Below story text: show region, fabric, occasion metadata labels.║
- * ║  • See README.md in this folder for all story content to write.║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📁 ONLY MODIFY THESE FILES IN THIS FOLDER:                     ║
- * ║     Feature10UI.java       ← Your Swing UI code here              ║
- * ║     Feature10Service.java  ← Your data/logic here                ║
- * ║     README.md               ← Full spec + layout diagram        ║
- * ╚══════════════════════════════════════════════════════════════════╝
+ * Feature 10 — Cultural Stories UI
  */
 public class Feature10UI extends BaseUI implements Feature {
 
     private final Feature10Service service = new Feature10Service();
+
+    private JList<String> itemList;
+    private JTextArea storyArea;
+    private JLabel metaLabel;
 
     public Feature10UI() {
         super("Cultural Stories");
@@ -42,42 +32,69 @@ public class Feature10UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("📖  Cultural Stories", "Read the stories and legends behind iconic Indian garments."), BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(COLOR_BG);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        add(createHeader("📖 Cultural Stories", "Explore the heritage behind garments"), BorderLayout.NORTH);
 
-        JLabel placeholder = new JLabel("<html><center>" +
-            "<span style='font-size:36px'>📖</span><br><br>" +
-            "<b style='font-size:16px'>Cultural Stories</b><br><br>" +
-            "<span style='color:gray'>Read the stories and legends behind iconic Indian garments.</span><br><br>" +
-            "<span style='color:#8B4513'>" + DataStore.getAllItems().size() + " items in the data store</span>" +
-            "</center></html>", JLabel.CENTER);
-        placeholder.setFont(FONT_BODY);
-
-        JButton exploreBtn = createStyledButton("Explore " + DataStore.getAllItems().size() + " Items", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        exploreBtn.addActionListener(e -> showItemList());
-
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnRow.setOpaque(false);
-        btnRow.add(exploreBtn);
-
-        content.add(placeholder, BorderLayout.CENTER);
-        content.add(btnRow, BorderLayout.SOUTH);
-        add(content, BorderLayout.CENTER);
-    }
-
-    private void showItemList() {
         List<ClothingItem> items = DataStore.getAllItems();
-        StringBuilder sb = new StringBuilder("All Clothing Items:\n\n");
+
+        // LEFT: List
+        DefaultListModel<String> listModel = new DefaultListModel<>();
         for (ClothingItem item : items) {
-            sb.append(item.getImageIcon()).append(" ").append(item.getName())
-              .append(" — ").append(item.getRegion()).append("\n");
+            listModel.addElement(item.getName());
         }
-        JTextArea area = new JTextArea(sb.toString());
-        area.setFont(FONT_BODY);
-        area.setEditable(false);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Cultural Stories", JOptionPane.PLAIN_MESSAGE);
+
+        itemList = new JList<>(listModel);
+        itemList.setFont(FONT_BODY);
+        JScrollPane leftScroll = new JScrollPane(itemList);
+
+        // RIGHT: Story Panel
+        JPanel rightPanel = new JPanel(new BorderLayout());
+        rightPanel.setBackground(COLOR_BG);
+
+        storyArea = new JTextArea("Select an item to view its story...");
+        storyArea.setWrapStyleWord(true);
+        storyArea.setLineWrap(true);
+        storyArea.setEditable(false);
+        storyArea.setFont(FONT_BODY);
+        storyArea.setBackground(COLOR_CARD);
+
+        JScrollPane storyScroll = new JScrollPane(storyArea);
+
+        metaLabel = new JLabel(" ");
+        metaLabel.setFont(FONT_SMALL);
+        metaLabel.setForeground(COLOR_PRIMARY);
+
+        rightPanel.add(storyScroll, BorderLayout.CENTER);
+        rightPanel.add(metaLabel, BorderLayout.SOUTH);
+
+        // SPLIT PANE
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftScroll, rightPanel);
+        splitPane.setDividerLocation(200);
+
+        add(splitPane, BorderLayout.CENTER);
+
+        // LISTENER
+        itemList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting()) {
+                String selectedName = itemList.getSelectedValue();
+
+                if (selectedName != null) {
+                    String story = service.getStory(selectedName);
+                    storyArea.setText(story);
+
+                    // Find metadata
+                    for (ClothingItem item : items) {
+                        if (item.getName().equals(selectedName)) {
+                            metaLabel.setText(
+                                    "Region: " + item.getRegion() +
+                                    " | Fabric: " + item.getFabricType() +
+                                    " | Occasion: " + item.getOccasion()
+                            );
+                            break;
+                        }
+                    }
+                }
+            }
+        });
     }
 }
