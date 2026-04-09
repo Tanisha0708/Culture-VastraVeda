@@ -1,9 +1,19 @@
 package vastraveda.features.feature9_gallery;
 
-/**
- * Feature 9 — Visual Gallery Service
- * Add business logic here.
- */
+import vastraveda.core.data.DataStore;
+import vastraveda.core.models.ClothingItem;
+import java.util.List;
+
 public class Feature9Service {
-    // TODO: Add Visual Gallery logic here
+
+    public List<ClothingItem> getAllGarments() {
+        return DataStore.getAllItems();
+    }
+
+    public ClothingItem getItemDetail(String name) {
+        return DataStore.getAllItems().stream()
+                .filter(item -> item.getName().equals(name))
+                .findFirst()
+                .orElse(null);
+    }
 }

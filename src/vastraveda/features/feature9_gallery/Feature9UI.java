@@ -1,31 +1,13 @@
 package vastraveda.features.feature9_gallery;
 
+import vastraveda.core.models.ClothingItem;
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.data.DataStore;
-import vastraveda.core.models.ClothingItem;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-/**
- * ╔══════════════════════════════════════════════════════════════════╗
- * ║  FEATURE 9 — Visual Gallery                                        ║
- * ║  CONTRIBUTOR: Your Name (@github_handle)                         ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📋 WHAT TO BUILD:                                              ║
- * ║  • GridLayout(0,3) of item cards — each card: emoji(42pt), name, region, tags.║
- * ║  • Toggle button to switch between Grid view and List view.  ║
- * ║  • Live search via DocumentListener and gender filter dropdown.║
- * ║  • Click a card to open detail dialog. Hover darkens card background.║
- * ║  • See README.md in this folder for card design and layout.  ║
- * ╠══════════════════════════════════════════════════════════════════╣
- * ║  📁 ONLY MODIFY THESE FILES IN THIS FOLDER:                     ║
- * ║     Feature9UI.java       ← Your Swing UI code here              ║
- * ║     Feature9Service.java  ← Your data/logic here                ║
- * ║     README.md               ← Full spec + layout diagram        ║
- * ╚══════════════════════════════════════════════════════════════════╝
- */
 public class Feature9UI extends BaseUI implements Feature {
 
     private final Feature9Service service = new Feature9Service();
@@ -42,42 +24,135 @@ public class Feature9UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("🖼  Visual Gallery", "Browse a visual gallery of Indian clothing styles."), BorderLayout.NORTH);
+        add(createHeader("🖼 Visual Gallery", "Browse beautiful garment styles"), BorderLayout.NORTH);
 
-        JPanel content = new JPanel(new BorderLayout());
-        content.setBackground(COLOR_BG);
-        content.setBorder(BorderFactory.createEmptyBorder(20, 24, 20, 24));
+        List<ClothingItem> items = service.getAllGarments();
 
-        JLabel placeholder = new JLabel("<html><center>" +
-            "<span style='font-size:36px'>🖼</span><br><br>" +
-            "<b style='font-size:16px'>Visual Gallery</b><br><br>" +
-            "<span style='color:gray'>Browse a visual gallery of Indian clothing styles.</span><br><br>" +
-            "<span style='color:#8B4513'>" + DataStore.getAllItems().size() + " items in the data store</span>" +
-            "</center></html>", JLabel.CENTER);
-        placeholder.setFont(FONT_BODY);
+        // Grid panel: 3 columns
+        JPanel gridPanel = new JPanel(new GridLayout(0, 3, 12, 12));
+        gridPanel.setBackground(COLOR_BG);
+        gridPanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
 
-        JButton exploreBtn = createStyledButton("Explore " + DataStore.getAllItems().size() + " Items", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        exploreBtn.addActionListener(e -> showItemList());
+        for (ClothingItem item : items) {
+            gridPanel.add(buildGarmentCard(item));
+        }
 
-        JPanel btnRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnRow.setOpaque(false);
-        btnRow.add(exploreBtn);
-
-        content.add(placeholder, BorderLayout.CENTER);
-        content.add(btnRow, BorderLayout.SOUTH);
-        add(content, BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(gridPanel);
+        scrollPane.setBackground(COLOR_BG);
+        scrollPane.getViewport().setBackground(COLOR_BG);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
-    private void showItemList() {
-        List<ClothingItem> items = DataStore.getAllItems();
-        StringBuilder sb = new StringBuilder("All Clothing Items:\n\n");
-        for (ClothingItem item : items) {
-            sb.append(item.getImageIcon()).append(" ").append(item.getName())
-              .append(" — ").append(item.getRegion()).append("\n");
-        }
-        JTextArea area = new JTextArea(sb.toString());
-        area.setFont(FONT_BODY);
-        area.setEditable(false);
-        JOptionPane.showMessageDialog(this, new JScrollPane(area), "Visual Gallery", JOptionPane.PLAIN_MESSAGE);
+    private JPanel buildGarmentCard(ClothingItem item) {
+        JPanel card = createCard();
+        card.setLayout(new BorderLayout(0, 6));
+        card.setBorder(BorderFactory.createCompoundBorder(
+                card.getBorder(),
+                BorderFactory.createEmptyBorder(12, 12, 12, 12)
+        ));
+        card.setBackground(COLOR_CARD);
+        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        // Large emoji icon
+        JLabel icon = new JLabel(item.getImageIcon(), SwingConstants.CENTER);
+        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
+        icon.setPreferredSize(new Dimension(100, 60));
+        card.add(icon, BorderLayout.NORTH);
+
+        // Name
+        JLabel name = new JLabel(item.getName(), SwingConstants.CENTER);
+        name.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        name.setForeground(COLOR_TEXT);
+        card.add(name, BorderLayout.CENTER);
+
+        // Region badge
+        JLabel region = new JLabel(item.getRegion(), SwingConstants.CENTER);
+        region.setFont(new Font("Segoe UI", Font.PLAIN, 11));
+        region.setForeground(COLOR_PRIMARY);
+        card.add(region, BorderLayout.SOUTH);
+
+        // Click → detail dialog
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                showDetailDialog(item);
+            }
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                card.setBackground(new Color(255, 245, 220));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                card.setBackground(COLOR_CARD);
+            }
+        });
+
+        return card;
+    }
+
+    private void showDetailDialog(ClothingItem item) {
+        JDialog dialog = new JDialog(this, item.getName(), true);
+        dialog.setSize(420, 360);
+        dialog.setLocationRelativeTo(this);
+        dialog.setLayout(new BorderLayout());
+        dialog.getContentPane().setBackground(COLOR_BG);
+
+        // Header
+        JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        header.setBackground(COLOR_BG_DARK);
+        JLabel headerIcon = new JLabel(item.getImageIcon() + "  " + item.getName());
+        headerIcon.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
+        headerIcon.setForeground(COLOR_TEXT_LIGHT);
+        header.add(headerIcon);
+        dialog.add(header, BorderLayout.NORTH);
+
+        // Details panel
+        JPanel details = new JPanel();
+        details.setLayout(new BoxLayout(details, BoxLayout.Y_AXIS));
+        details.setBackground(COLOR_BG);
+        details.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+
+        details.add(detailRow("Region", item.getRegion()));
+        details.add(Box.createVerticalStrut(8));
+        details.add(detailRow("Fabric", item.getFabricType()));
+        details.add(Box.createVerticalStrut(8));
+        details.add(detailRow("Occasion", item.getOccasion()));
+        details.add(Box.createVerticalStrut(8));
+        details.add(detailRow("Gender", item.getGender()));
+        details.add(Box.createVerticalStrut(8));
+        details.add(detailRow("Era", item.getEra()));
+        details.add(Box.createVerticalStrut(12));
+
+        JTextArea desc = createTextArea(item.getDescription());
+        desc.setLineWrap(true);
+        desc.setWrapStyleWord(true);
+        details.add(desc);
+
+        dialog.add(new JScrollPane(details), BorderLayout.CENTER);
+
+        JButton close = createStyledButton("Close", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
+        close.addActionListener(e -> dialog.dispose());
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        btnPanel.setBackground(COLOR_BG);
+        btnPanel.add(close);
+        dialog.add(btnPanel, BorderLayout.SOUTH);
+
+        dialog.setVisible(true);
+    }
+
+    private JPanel detailRow(String label, String value) {
+        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        row.setBackground(COLOR_BG);
+        JLabel lbl = new JLabel(label + ": ");
+        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        lbl.setForeground(COLOR_PRIMARY);
+        JLabel val = new JLabel(value != null ? value : "N/A");
+        val.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        val.setForeground(COLOR_TEXT);
+        row.add(lbl);
+        row.add(val);
+        return row;
     }
 }
