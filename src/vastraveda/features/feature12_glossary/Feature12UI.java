@@ -2,25 +2,28 @@ package vastraveda.features.feature12_glossary;
 
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
-import vastraveda.core.models.ClothingItem;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
 
+/**
+ * Feature 12 — Clothing Version Control UI.
+ */
 public class Feature12UI extends BaseUI implements Feature {
 
-    private Feature12Service service;
-    private JList<String> termList;
-    private DefaultListModel<String> listModel;
-    private JTextArea meaningArea;
-    private JTextField searchField;
-
-    private List<ClothingItem> currentItems;
+    private final Feature12Service service = new Feature12Service();
+    private JComboBox<String> garmentCombo;
+    private JList<String> historyList;
+    private DefaultListModel<String> historyModel;
+    private JTextField labelField;
+    private JPanel diffPanel;
+    private JComboBox<String> compareA;
+    private JComboBox<String> compareB;
 
     public Feature12UI() {
-        super("Textile Glossary");
-        service = new Feature12Service();
+        super("Clothing Version Control");
         buildUI();
     }
 
@@ -31,97 +34,180 @@ public class Feature12UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
+        add(createHeader("📚 Clothing Version Control", "Save versions, view history, compare, rollback"), BorderLayout.NORTH);
 
-        // Header
-        add(createHeader("📚 Textile Glossary", "Explore Indian textile terms"), BorderLayout.NORTH);
+        JPanel main = new JPanel(new BorderLayout(8, 8));
+        main.setBackground(COLOR_BG);
+        main.setBorder(BorderFactory.createEmptyBorder(12, 16, 12, 16));
 
-        // 🔍 Search Panel
-        JPanel topPanel = new JPanel(new BorderLayout());
-        searchField = new JTextField();
-        searchField.setToolTipText("Type to search...");
-        topPanel.add(searchField, BorderLayout.CENTER);
-        add(topPanel, BorderLayout.SOUTH);
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 4));
+        top.setOpaque(false);
+        top.add(new JLabel("Garment:"));
+        garmentCombo = createComboBox(service.getGarmentNames().toArray(new String[0]));
+        garmentCombo.setPreferredSize(new Dimension(220, 28));
+        garmentCombo.addActionListener(e -> refreshHistory());
+        top.add(garmentCombo);
+        top.add(new JLabel("Label:"));
+        labelField = new JTextField(12);
+        top.add(labelField);
+        JButton saveBtn = createStyledButton("Save version", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
+        saveBtn.addActionListener(e -> doSave());
+        top.add(saveBtn);
+        JButton refreshBtn = createStyledButton("Refresh", COLOR_BORDER, COLOR_TEXT);
+        refreshBtn.addActionListener(e -> refreshHistory());
+        top.add(refreshBtn);
 
-        // 🔤 Alphabet Panel
-        JPanel alphabetPanel = new JPanel(new GridLayout(2, 13));
-        for (char c = 'A'; c <= 'Z'; c++) {
-            char letter = c;
-            JButton btn = createStyledButton(String.valueOf(c), COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-            btn.addActionListener(e -> loadItems(service.filterByLetter(letter)));
-            alphabetPanel.add(btn);
-        }
-        add(alphabetPanel, BorderLayout.NORTH);
+        historyModel = new DefaultListModel<>();
+        historyList = new JList<>(historyModel);
+        historyList.setFont(FONT_BODY);
+        JScrollPane histScroll = new JScrollPane(historyList);
+        histScroll.setBorder(BorderFactory.createTitledBorder("Version history"));
+        histScroll.setPreferredSize(new Dimension(280, 200));
 
-        // 📌 Split Layout
-        JSplitPane splitPane = new JSplitPane();
+        JPanel compareRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
+        compareRow.setOpaque(false);
+        compareRow.add(new JLabel("Compare:"));
+        compareA = new JComboBox<>();
+        compareB = new JComboBox<>();
+        compareA.setPreferredSize(new Dimension(140, 26));
+        compareB.setPreferredSize(new Dimension(140, 26));
+        compareRow.add(compareA);
+        compareRow.add(new JLabel("vs"));
+        compareRow.add(compareB);
+        JButton cmpBtn = createStyledButton("Show diff", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
+        cmpBtn.addActionListener(e -> showDiff());
+        compareRow.add(cmpBtn);
+        JButton rollBtn = createStyledButton("Rollback to selected", COLOR_ACCENT, COLOR_TEXT_LIGHT);
+        rollBtn.addActionListener(e -> doRollback());
+        compareRow.add(rollBtn);
 
-        listModel = new DefaultListModel<>();
-        termList = new JList<>(listModel);
+        diffPanel = new JPanel(new BorderLayout());
+        diffPanel.setBackground(COLOR_BG);
+        JScrollPane diffScroll = new JScrollPane(diffPanel);
+        diffScroll.setBorder(BorderFactory.createTitledBorder("Differences (green = same, amber = changed)"));
 
-        JPanel leftPanel = new JPanel(new BorderLayout());
-        leftPanel.add(new JLabel("📚 Textile Terms"), BorderLayout.NORTH);
-        leftPanel.add(new JScrollPane(termList), BorderLayout.CENTER);
+        JPanel leftCol = new JPanel(new BorderLayout(4, 4));
+        leftCol.setOpaque(false);
+        leftCol.add(histScroll, BorderLayout.CENTER);
+        leftCol.add(compareRow, BorderLayout.SOUTH);
 
-        splitPane.setLeftComponent(leftPanel);
+        JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftCol, diffScroll);
+        split.setResizeWeight(0.35);
 
-        meaningArea = createTextArea("Select a term to view details...");
-        meaningArea.setFont(new Font("Serif", Font.PLAIN, 16));
+        main.add(top, BorderLayout.NORTH);
+        main.add(split, BorderLayout.CENTER);
+        add(main, BorderLayout.CENTER);
 
-        JScrollPane rightScroll = new JScrollPane(meaningArea);
-        splitPane.setRightComponent(rightScroll);
-
-        splitPane.setDividerLocation(250);
-        add(splitPane, BorderLayout.CENTER);
-
-        // Load initial data
-        loadItems(service.getAllItems());
-
-        // 📌 List Selection
-        termList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                int index = termList.getSelectedIndex();
-
-                if (index >= 0 && currentItems != null && index < currentItems.size()) {
-                    ClothingItem item = currentItems.get(index);
-
-                    String details =
-                            "👗 " + item.getName() + "\n\n" +
-                            "📍 Region: " + item.getRegion() + "\n" +
-                            "🧵 Fabric: " + item.getFabricType() + "\n" +
-                            "🎉 Occasion: " + item.getOccasion() + "\n\n" +
-                            "📖 Description:\n" +
-                            item.getDescription() + "\n\n" +
-                            "🧺 Care Tips:\n" +
-                            item.getCareInstructions();
-
-                    meaningArea.setText(details);
-                }
-            }
-        });
-
-        // 🔥 Live Search
-        searchField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyReleased(java.awt.event.KeyEvent e) {
-                String keyword = searchField.getText();
-                loadItems(service.searchItems(keyword));
-            }
-        });
+        refreshHistory();
     }
 
-    private void loadItems(List<ClothingItem> items) {
-        currentItems = items;
-        listModel.clear();
-
-        if (items.isEmpty()) {
-            listModel.addElement("No results found");
-            meaningArea.setText("");
+    private void doSave() {
+        String g = (String) garmentCombo.getSelectedItem();
+        if (g == null) {
             return;
         }
+        service.saveVersion(g, labelField.getText().trim());
+        labelField.setText("");
+        refreshHistory();
+        showInfo("Saved", "Version saved for " + g);
+    }
 
-        for (ClothingItem item : items) {
-            listModel.addElement(item.getImageIcon() + " " + item.getName());
+    private void refreshHistory() {
+        String g = (String) garmentCombo.getSelectedItem();
+        historyModel.clear();
+        compareA.removeAllItems();
+        compareB.removeAllItems();
+        if (g == null) {
+            return;
         }
+        List<Feature12Service.Snapshot> snaps = service.getHistory(g);
+        for (Feature12Service.Snapshot s : snaps) {
+            String line = "v" + s.getVersion() + " — " + s.getLabel();
+            historyModel.addElement(line);
+            compareA.addItem(line);
+            compareB.addItem(line);
+        }
+        diffPanel.removeAll();
+        diffPanel.add(new JLabel("Select two versions and click Show diff.", SwingConstants.CENTER), BorderLayout.CENTER);
+        diffPanel.revalidate();
+        diffPanel.repaint();
+    }
 
-        meaningArea.setText("Select a term to view details...");
+    private Feature12Service.Snapshot snapshotAt(int index) {
+        String g = (String) garmentCombo.getSelectedItem();
+        if (g == null || index < 0) {
+            return null;
+        }
+        List<Feature12Service.Snapshot> list = service.getHistory(g);
+        return index < list.size() ? list.get(index) : null;
+    }
+
+    private void showDiff() {
+        int ia = compareA.getSelectedIndex();
+        int ib = compareB.getSelectedIndex();
+        if (ia < 0 || ib < 0 || ia == ib) {
+            JOptionPane.showMessageDialog(this, "Pick two different versions.", "Compare", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        Feature12Service.Snapshot sa = snapshotAt(ia);
+        Feature12Service.Snapshot sb = snapshotAt(ib);
+        if (sa == null || sb == null) {
+            return;
+        }
+        Feature12Service.Snapshot older = sa.getVersion() <= sb.getVersion() ? sa : sb;
+        Feature12Service.Snapshot newer = sa.getVersion() <= sb.getVersion() ? sb : sa;
+        List<Feature12Service.DiffLine> lines = service.compare(older, newer);
+
+        diffPanel.removeAll();
+        String[] cols = {"Field", "Older", "Newer"};
+        DefaultTableModel model = new DefaultTableModel(cols, 0) {
+            @Override
+            public boolean isCellEditable(int r, int c) {
+                return false;
+            }
+        };
+        for (Feature12Service.DiffLine d : lines) {
+            model.addRow(new Object[]{d.field, d.oldVal, d.newVal});
+        }
+        JTable table = new JTable(model);
+        table.setFont(FONT_SMALL);
+        table.setRowHeight(22);
+        table.setDefaultRenderer(Object.class, new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int row, int col) {
+                Component c = super.getTableCellRendererComponent(t, val, sel, foc, row, col);
+                boolean same = lines.get(row).same;
+                if (col == 0) {
+                    c.setBackground(new Color(245, 235, 215));
+                } else {
+                    c.setBackground(same ? new Color(198, 239, 206) : new Color(255, 235, 156));
+                }
+                return c;
+            }
+        });
+        diffPanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        diffPanel.revalidate();
+        diffPanel.repaint();
+    }
+
+    private void doRollback() {
+        int idx = historyList.getSelectedIndex();
+        if (idx < 0) {
+            JOptionPane.showMessageDialog(this, "Select a version in the list.", "Rollback", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        String g = (String) garmentCombo.getSelectedItem();
+        Feature12Service.Snapshot target = snapshotAt(idx);
+        if (g == null || target == null) {
+            return;
+        }
+        int ok = JOptionPane.showConfirmDialog(this,
+            "Record rollback as a new version pointing at snapshot v" + target.getVersion() + "?",
+            "Rollback", JOptionPane.OK_CANCEL_OPTION);
+        if (ok == JOptionPane.OK_OPTION) {
+            service.rollback(g, target);
+            refreshHistory();
+            showInfo("Rollback", "New history entry added. Use Compare to see lineage.");
+        }
     }
 }
