@@ -1,27 +1,26 @@
 package vastraveda.features.feature7_timeline;
 
+import vastraveda.core.models.ClothingItem;
 import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Feature 7 — Fabric Origins Tracker UI
- */
 public class Feature7UI extends BaseUI implements Feature {
 
     private final Feature7Service service = new Feature7Service();
-    private JComboBox<String> fabricSelector;
-    private JPanel timelineContent;
-    private JLabel titleLabel;
-    private JLabel subtitleLabel;
-    private JScrollPane timelineScroll;
+    private JComboBox<String> comboA;
+    private JComboBox<String> comboB;
+    private JPanel comparePanel;
+    private String[] garmentNames;
 
     public Feature7UI() {
-        super("Fabric Origins Tracker");
+        super("Cross-Culture Comparison");
         buildUI();
     }
 
@@ -32,193 +31,161 @@ public class Feature7UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("🧵 Fabric Origins Tracker", "Track origin and geographic spread of Indian fabrics"), BorderLayout.NORTH);
+        add(createHeader("🌍 Cross-Culture Clothing Comparison", "Compare two garments — differences highlighted"), BorderLayout.NORTH);
 
-        add(buildTopControls(), BorderLayout.NORTH);
-        add(buildTimelinePanel(), BorderLayout.CENTER);
+        JPanel selectorPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 14));
+        selectorPanel.setBackground(new Color(245, 235, 215));
+        selectorPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, COLOR_BORDER));
 
-        List<String> names = service.getFabricNames();
-        if (!names.isEmpty()) {
-            renderTimeline(names.get(0));
+        List<ClothingItem> items = service.getAllItems();
+        List<String> names = new ArrayList<>();
+        for (ClothingItem it : items) {
+            names.add(it.getName());
         }
+        garmentNames = names.toArray(new String[0]);
+
+        JLabel labelA = new JLabel("Garment A:");
+        labelA.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        labelA.setForeground(COLOR_TEXT);
+        comboA = createComboBox(garmentNames);
+        comboA.setPreferredSize(new Dimension(220, 30));
+        JLabel labelB = new JLabel("Garment B:");
+        labelB.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        labelB.setForeground(COLOR_TEXT);
+        comboB = createComboBox(garmentNames);
+        comboB.setPreferredSize(new Dimension(220, 30));
+        if (garmentNames.length > 1) {
+            comboB.setSelectedIndex(1);
+        }
+        JButton compareBtn = createStyledButton("Compare", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
+        compareBtn.addActionListener(e -> runComparison());
+        JButton resetBtn = createStyledButton("Reset", COLOR_BORDER, COLOR_TEXT);
+        resetBtn.addActionListener(e -> resetComparison());
+
+        selectorPanel.add(labelA);
+        selectorPanel.add(comboA);
+        selectorPanel.add(labelB);
+        selectorPanel.add(comboB);
+        selectorPanel.add(compareBtn);
+        selectorPanel.add(resetBtn);
+
+        JPanel legend = new JPanel(new FlowLayout(FlowLayout.CENTER, 16, 6));
+        legend.setBackground(COLOR_BG);
+        legend.add(legendDot(new Color(198, 239, 206), "Same"));
+        legend.add(legendDot(new Color(255, 235, 156), "Different"));
+
+        JPanel topWrapper = new JPanel(new BorderLayout());
+        topWrapper.setBackground(COLOR_BG);
+        topWrapper.add(selectorPanel, BorderLayout.NORTH);
+        topWrapper.add(legend, BorderLayout.SOUTH);
+
+        comparePanel = new JPanel(new BorderLayout());
+        comparePanel.setBackground(COLOR_BG);
+        comparePanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
+
+        add(topWrapper, BorderLayout.NORTH);
+        add(new JScrollPane(comparePanel), BorderLayout.CENTER);
+        runComparison();
     }
 
-    private JPanel buildTopControls() {
-        JPanel top = new JPanel(new BorderLayout());
-        top.setBackground(new Color(245, 235, 215));
-        top.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
-
-        JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        left.setOpaque(false);
-        JLabel label = new JLabel("Select Fabric:");
-        label.setFont(FONT_LABEL);
-        label.setForeground(COLOR_TEXT);
-
-        List<String> names = service.getFabricNames();
-        fabricSelector = createComboBox(names.toArray(new String[0]));
-        fabricSelector.setPreferredSize(new Dimension(220, 30));
-        fabricSelector.addActionListener(e -> {
-            String selected = (String) fabricSelector.getSelectedItem();
-            if (selected != null) {
-                renderTimeline(selected);
-            }
-        });
-
-        left.add(label);
-        left.add(fabricSelector);
-
-        JPanel right = new JPanel(new GridLayout(2, 1, 0, 2));
-        right.setOpaque(false);
-        titleLabel = new JLabel("Timeline");
-        titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        titleLabel.setForeground(COLOR_PRIMARY);
-        subtitleLabel = new JLabel("Origin and spread");
-        subtitleLabel.setFont(FONT_SMALL);
-        subtitleLabel.setForeground(COLOR_TEXT);
-        right.add(titleLabel);
-        right.add(subtitleLabel);
-
-        top.add(left, BorderLayout.WEST);
-        top.add(right, BorderLayout.EAST);
-        return top;
-    }
-
-    private JPanel buildTimelinePanel() {
-        timelineContent = new JPanel();
-        timelineContent.setLayout(new BoxLayout(timelineContent, BoxLayout.Y_AXIS));
-        timelineContent.setBackground(COLOR_BG);
-        timelineContent.setBorder(BorderFactory.createEmptyBorder(12, 20, 16, 20));
-
-        timelineScroll = new JScrollPane(timelineContent);
-        timelineScroll.setBorder(BorderFactory.createEmptyBorder());
-        timelineScroll.getViewport().setBackground(COLOR_BG);
-        timelineScroll.getVerticalScrollBar().setUnitIncrement(14);
-
-        JPanel outer = new JPanel(new BorderLayout());
-        outer.setBackground(COLOR_BG);
-        outer.add(timelineScroll, BorderLayout.CENTER);
-        return outer;
-    }
-
-    private void renderTimeline(String fabricName) {
-        Feature7Service.FabricOrigin fabric = service.getFabricByName(fabricName);
-        timelineContent.removeAll();
-        if (fabric == null) {
-            JLabel missing = new JLabel("No timeline data found.", JLabel.CENTER);
-            missing.setFont(FONT_BODY);
-            missing.setForeground(COLOR_TEXT);
-            timelineContent.add(missing);
-            refreshTimeline();
+    private void runComparison() {
+        List<ClothingItem> items = service.getAllItems();
+        int idxA = comboA.getSelectedIndex();
+        int idxB = comboB.getSelectedIndex();
+        if (idxA < 0 || idxB < 0) {
             return;
         }
+        ClothingItem itemA = items.get(idxA);
+        ClothingItem itemB = items.get(idxB);
+        final String[][] rows = service.buildComparisonRows(itemA, itemB);
 
-        titleLabel.setText("🧶 " + fabric.getFabricName());
-        subtitleLabel.setText("Origin: " + fabric.getOriginRegion() + " (" + service.formatYear(fabric.getOriginYear()) + ")");
+        comparePanel.removeAll();
+        JPanel headerRow = new JPanel(new GridLayout(1, 3, 10, 0));
+        headerRow.setBackground(COLOR_BG);
+        headerRow.setBorder(BorderFactory.createEmptyBorder(0, 0, 12, 0));
+        headerRow.add(new JLabel(""));
+        headerRow.add(buildItemHeader(itemA, COLOR_PRIMARY));
+        headerRow.add(buildItemHeader(itemB, new Color(100, 60, 20)));
 
-        JPanel intro = createCard();
-        intro.setLayout(new BorderLayout());
-        intro.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createMatteBorder(0, 5, 0, 0, COLOR_PRIMARY),
-            BorderFactory.createEmptyBorder(10, 12, 10, 12)
-        ));
-        intro.setAlignmentX(Component.LEFT_ALIGNMENT);
-        intro.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-        JLabel desc = new JLabel("<html><body style='width:720px'>" + fabric.getDescription() + "</body></html>");
-        desc.setFont(FONT_BODY);
-        desc.setForeground(COLOR_TEXT);
-        intro.add(desc, BorderLayout.CENTER);
-        timelineContent.add(intro);
-        timelineContent.add(Box.createVerticalStrut(12));
-
-        List<TimelineStep> steps = buildSteps(fabric);
-        for (TimelineStep step : steps) {
-            timelineContent.add(buildStepCard(step));
-            timelineContent.add(Box.createVerticalStrut(10));
-        }
-
-        refreshTimeline();
-        SwingUtilities.invokeLater(() -> timelineScroll.getVerticalScrollBar().setValue(0));
-    }
-
-    private List<TimelineStep> buildSteps(Feature7Service.FabricOrigin fabric) {
-        List<TimelineStep> steps = new ArrayList<>();
-        steps.add(new TimelineStep(
-            true,
-            fabric.getOriginRegion(),
-            fabric.getOriginYear(),
-            "Origin identified for " + fabric.getFabricName() + "."
-        ));
-        for (Feature7Service.SpreadEvent event : fabric.getSpreadHistory()) {
-            steps.add(new TimelineStep(false, event.getRegion(), event.getYear(), event.getNote()));
-        }
-        return steps;
-    }
-
-    private JPanel buildStepCard(TimelineStep step) {
-        JPanel row = new JPanel(new BorderLayout(12, 0));
-        row.setBackground(COLOR_BG);
-        row.setAlignmentX(Component.LEFT_ALIGNMENT);
-        row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 86));
-
-        JPanel marker = new JPanel() {
+        String[] columns = {"Attribute", itemA.getName(), itemB.getName()};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setColor(new Color(180, 150, 100));
-                g2.fillRect(16, 0, 4, getHeight());
-                g2.setColor(step.isOrigin ? COLOR_ACCENT : COLOR_PRIMARY);
-                g2.fillOval(8, 28, 20, 20);
-                g2.dispose();
+            public boolean isCellEditable(int r, int c) {
+                return false;
             }
         };
-        marker.setOpaque(false);
-        marker.setPreferredSize(new Dimension(34, 80));
-
-        JPanel card = createCard();
-        card.setLayout(new GridLayout(3, 1, 0, 2));
-        card.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(step.isOrigin ? COLOR_ACCENT : COLOR_BORDER),
-            BorderFactory.createEmptyBorder(8, 12, 8, 12)
-        ));
-
-        JLabel heading = new JLabel((step.isOrigin ? "Origin • " : "Spread • ") + step.region);
-        heading.setFont(FONT_LABEL);
-        heading.setForeground(step.isOrigin ? COLOR_ACCENT : COLOR_PRIMARY);
-
-        JLabel year = new JLabel("Year: " + service.formatYear(step.year));
-        year.setFont(FONT_SMALL);
-        year.setForeground(COLOR_TEXT);
-
-        JLabel note = new JLabel("<html><body style='width:660px'>" + step.note + "</body></html>");
-        note.setFont(FONT_SMALL);
-        note.setForeground(new Color(90, 70, 45));
-
-        card.add(heading);
-        card.add(year);
-        card.add(note);
-
-        row.add(marker, BorderLayout.WEST);
-        row.add(card, BorderLayout.CENTER);
-        return row;
-    }
-
-    private void refreshTimeline() {
-        timelineContent.revalidate();
-        timelineContent.repaint();
-    }
-
-    private static final class TimelineStep {
-        private final boolean isOrigin;
-        private final String region;
-        private final int year;
-        private final String note;
-
-        private TimelineStep(boolean isOrigin, String region, int year, String note) {
-            this.isOrigin = isOrigin;
-            this.region = region;
-            this.year = year;
-            this.note = note;
+        for (String[] row : rows) {
+            model.addRow(row);
         }
+        JTable table = new JTable(model);
+        table.setRowHeight(32);
+        table.setFont(FONT_BODY);
+        table.setGridColor(COLOR_BORDER);
+        table.getTableHeader().setBackground(COLOR_PRIMARY);
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean sel, boolean foc, int row, int col) {
+                Component c = super.getTableCellRendererComponent(t, val, sel, foc, row, col);
+                String[] dataRow = rows[row];
+                if (col == 0) {
+                    c.setBackground(new Color(245, 235, 215));
+                    c.setFont(new Font("Segoe UI", Font.BOLD, 12));
+                } else {
+                    boolean match = service.valuesMatch(dataRow[1], dataRow[2]);
+                    c.setBackground(match ? new Color(198, 239, 206) : new Color(255, 235, 156));
+                }
+                ((JLabel) c).setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 8));
+                return c;
+            }
+        });
+        comparePanel.add(headerRow, BorderLayout.NORTH);
+        comparePanel.add(new JScrollPane(table), BorderLayout.CENTER);
+        comparePanel.revalidate();
+        comparePanel.repaint();
+    }
+
+    private JPanel buildItemHeader(ClothingItem item, Color accent) {
+        JPanel card = createCard();
+        card.setLayout(new BorderLayout(6, 0));
+        card.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(accent, 2),
+            BorderFactory.createEmptyBorder(10, 14, 10, 14)));
+        JLabel icon = new JLabel(item.getImageIcon(), SwingConstants.CENTER);
+        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 28));
+        JLabel name = new JLabel(item.getName());
+        name.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        name.setForeground(accent);
+        JLabel meta = new JLabel(item.getRegion() + " · " + item.getFabricType());
+        meta.setFont(FONT_SMALL);
+        JPanel text = new JPanel(new BorderLayout());
+        text.setOpaque(false);
+        text.add(name, BorderLayout.NORTH);
+        text.add(meta, BorderLayout.SOUTH);
+        card.add(icon, BorderLayout.WEST);
+        card.add(text, BorderLayout.CENTER);
+        return card;
+    }
+
+    private void resetComparison() {
+        if (garmentNames == null || garmentNames.length == 0) {
+            return;
+        }
+        comboA.setSelectedIndex(0);
+        comboB.setSelectedIndex(garmentNames.length > 1 ? 1 : 0);
+        runComparison();
+    }
+
+    private JPanel legendDot(Color color, String label) {
+        JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 4, 0));
+        p.setOpaque(false);
+        JLabel dot = new JLabel("  ");
+        dot.setOpaque(true);
+        dot.setBackground(color);
+        dot.setPreferredSize(new Dimension(14, 14));
+        dot.setBorder(BorderFactory.createLineBorder(COLOR_BORDER));
+        p.add(dot);
+        p.add(new JLabel(label));
+        return p;
     }
 }

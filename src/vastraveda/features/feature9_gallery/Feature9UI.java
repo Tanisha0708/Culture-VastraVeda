@@ -5,15 +5,20 @@ import vastraveda.core.utils.BaseUI;
 import vastraveda.core.utils.Feature;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Feature9UI extends BaseUI implements Feature {
 
     private final Feature9Service service = new Feature9Service();
+    private JTable issueTable;
+    private DefaultTableModel issueModel;
+    private List<Feature9Service.Issue> rowToIssue = new ArrayList<>();
 
     public Feature9UI() {
-        super("Visual Gallery");
+        super("Issue Tracker");
         buildUI();
     }
 
@@ -24,135 +29,101 @@ public class Feature9UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("🖼 Visual Gallery", "Browse beautiful garment styles"), BorderLayout.NORTH);
+        JPanel topWrap = new JPanel(new BorderLayout());
+        topWrap.add(createHeader("🛡 Issue Tracker — Cultural Accuracy", "Report problems — moderators update status"), BorderLayout.NORTH);
+        JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        actions.setBackground(new Color(245, 235, 215));
+        JButton report = createStyledButton("Report issue", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
+        report.addActionListener(e -> openReportForm());
+        JButton refresh = createStyledButton("Refresh list", COLOR_BORDER, COLOR_TEXT);
+        refresh.addActionListener(e -> reloadTable());
+        actions.add(report);
+        actions.add(refresh);
+        topWrap.add(actions, BorderLayout.SOUTH);
+        add(topWrap, BorderLayout.NORTH);
 
-        List<ClothingItem> items = service.getAllGarments();
-
-        // Grid panel: 3 columns
-        JPanel gridPanel = new JPanel(new GridLayout(0, 3, 12, 12));
-        gridPanel.setBackground(COLOR_BG);
-        gridPanel.setBorder(BorderFactory.createEmptyBorder(16, 16, 16, 16));
-
-        for (ClothingItem item : items) {
-            gridPanel.add(buildGarmentCard(item));
-        }
-
-        JScrollPane scrollPane = new JScrollPane(gridPanel);
-        scrollPane.setBackground(COLOR_BG);
-        scrollPane.getViewport().setBackground(COLOR_BG);
-        scrollPane.setBorder(null);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        add(scrollPane, BorderLayout.CENTER);
-    }
-
-    private JPanel buildGarmentCard(ClothingItem item) {
-        JPanel card = createCard();
-        card.setLayout(new BorderLayout(0, 6));
-        card.setBorder(BorderFactory.createCompoundBorder(
-                card.getBorder(),
-                BorderFactory.createEmptyBorder(12, 12, 12, 12)
-        ));
-        card.setBackground(COLOR_CARD);
-        card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        // Large emoji icon
-        JLabel icon = new JLabel(item.getImageIcon(), SwingConstants.CENTER);
-        icon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
-        icon.setPreferredSize(new Dimension(100, 60));
-        card.add(icon, BorderLayout.NORTH);
-
-        // Name
-        JLabel name = new JLabel(item.getName(), SwingConstants.CENTER);
-        name.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        name.setForeground(COLOR_TEXT);
-        card.add(name, BorderLayout.CENTER);
-
-        // Region badge
-        JLabel region = new JLabel(item.getRegion(), SwingConstants.CENTER);
-        region.setFont(new Font("Segoe UI", Font.PLAIN, 11));
-        region.setForeground(COLOR_PRIMARY);
-        card.add(region, BorderLayout.SOUTH);
-
-        // Click → detail dialog
-        card.addMouseListener(new java.awt.event.MouseAdapter() {
+        String[] cols = {"ID", "Garment", "Title", "Reporter", "Status", "Mod note"};
+        issueModel = new DefaultTableModel(cols, 0) {
             @Override
-            public void mouseClicked(java.awt.event.MouseEvent e) {
-                showDetailDialog(item);
+            public boolean isCellEditable(int r, int c) {
+                return false;
             }
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                card.setBackground(new Color(255, 245, 220));
-            }
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                card.setBackground(COLOR_CARD);
-            }
+        };
+        issueTable = new JTable(issueModel);
+        issueTable.setFont(FONT_SMALL);
+        issueTable.setRowHeight(22);
+        issueTable.getTableHeader().setBackground(COLOR_PRIMARY);
+        issueTable.getTableHeader().setForeground(Color.WHITE);
+
+        JPanel mod = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 8));
+        mod.setBorder(BorderFactory.createTitledBorder("Moderator dashboard"));
+        JComboBox<String> statusCombo = new JComboBox<>(new String[]{
+            Feature9Service.STATUS_OPEN,
+            Feature9Service.STATUS_REVIEW,
+            Feature9Service.STATUS_RESOLVED
         });
+        JTextField note = new JTextField(20);
+        JButton apply = createStyledButton("Update selected", COLOR_ACCENT, COLOR_TEXT_LIGHT);
+        apply.addActionListener(e -> {
+            int r = issueTable.getSelectedRow();
+            if (r < 0 || r >= rowToIssue.size()) {
+                JOptionPane.showMessageDialog(this, "Select an issue row.", "Moderator", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            Feature9Service.Issue iss = rowToIssue.get(r);
+            service.updateStatus(iss, (String) statusCombo.getSelectedItem(), note.getText().trim());
+            reloadTable();
+        });
+        mod.add(new JLabel("Status:"));
+        mod.add(statusCombo);
+        mod.add(new JLabel("Note:"));
+        mod.add(note);
+        mod.add(apply);
 
-        return card;
+        JPanel south = new JPanel(new BorderLayout());
+        south.add(mod, BorderLayout.CENTER);
+
+        add(new JScrollPane(issueTable), BorderLayout.CENTER);
+        add(south, BorderLayout.SOUTH);
+
+        reloadTable();
     }
 
-    private void showDetailDialog(ClothingItem item) {
-        JDialog dialog = new JDialog(this, item.getName(), true);
-        dialog.setSize(420, 360);
-        dialog.setLocationRelativeTo(this);
-        dialog.setLayout(new BorderLayout());
-        dialog.getContentPane().setBackground(COLOR_BG);
-
-        // Header
-        JPanel header = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        header.setBackground(COLOR_BG_DARK);
-        JLabel headerIcon = new JLabel(item.getImageIcon() + "  " + item.getName());
-        headerIcon.setFont(new Font("Segoe UI Emoji", Font.BOLD, 18));
-        headerIcon.setForeground(COLOR_TEXT_LIGHT);
-        header.add(headerIcon);
-        dialog.add(header, BorderLayout.NORTH);
-
-        // Details panel
-        JPanel details = new JPanel();
-        details.setLayout(new BoxLayout(details, BoxLayout.Y_AXIS));
-        details.setBackground(COLOR_BG);
-        details.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
-
-        details.add(detailRow("Region", item.getRegion()));
-        details.add(Box.createVerticalStrut(8));
-        details.add(detailRow("Fabric", item.getFabricType()));
-        details.add(Box.createVerticalStrut(8));
-        details.add(detailRow("Occasion", item.getOccasion()));
-        details.add(Box.createVerticalStrut(8));
-        details.add(detailRow("Gender", item.getGender()));
-        details.add(Box.createVerticalStrut(8));
-        details.add(detailRow("Era", item.getEra()));
-        details.add(Box.createVerticalStrut(12));
-
-        JTextArea desc = createTextArea(item.getDescription());
-        desc.setLineWrap(true);
-        desc.setWrapStyleWord(true);
-        details.add(desc);
-
-        dialog.add(new JScrollPane(details), BorderLayout.CENTER);
-
-        JButton close = createStyledButton("Close", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
-        close.addActionListener(e -> dialog.dispose());
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        btnPanel.setBackground(COLOR_BG);
-        btnPanel.add(close);
-        dialog.add(btnPanel, BorderLayout.SOUTH);
-
-        dialog.setVisible(true);
+    private void reloadTable() {
+        issueModel.setRowCount(0);
+        rowToIssue.clear();
+        for (Feature9Service.Issue i : service.getIssues()) {
+            rowToIssue.add(i);
+            issueModel.addRow(new Object[]{
+                i.id, i.garmentName, i.title, i.reporter, i.status,
+                i.moderatorNote == null ? "" : i.moderatorNote
+            });
+        }
     }
 
-    private JPanel detailRow(String label, String value) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        row.setBackground(COLOR_BG);
-        JLabel lbl = new JLabel(label + ": ");
-        lbl.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        lbl.setForeground(COLOR_PRIMARY);
-        JLabel val = new JLabel(value != null ? value : "N/A");
-        val.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        val.setForeground(COLOR_TEXT);
-        row.add(lbl);
-        row.add(val);
-        return row;
+    private void openReportForm() {
+        List<String> names = new ArrayList<>();
+        for (ClothingItem it : service.getGarments()) {
+            names.add(it.getName());
+        }
+        JComboBox<String> g = new JComboBox<>(names.toArray(new String[0]));
+        JTextField title = new JTextField(20);
+        JTextArea detail = new JTextArea(4, 20);
+        JTextField reporter = new JTextField("anonymous", 12);
+        JPanel p = new JPanel(new GridLayout(0, 1, 4, 4));
+        p.add(new JLabel("Garment:"));
+        p.add(g);
+        p.add(new JLabel("Title:"));
+        p.add(title);
+        p.add(new JLabel("Description:"));
+        p.add(new JScrollPane(detail));
+        p.add(new JLabel("Your name / handle:"));
+        p.add(reporter);
+        int ok = JOptionPane.showConfirmDialog(this, p, "Report cultural accuracy issue", JOptionPane.OK_CANCEL_OPTION);
+        if (ok == JOptionPane.OK_OPTION && !title.getText().trim().isEmpty()) {
+            service.addIssue((String) g.getSelectedItem(), title.getText().trim(), detail.getText().trim(), reporter.getText().trim());
+            reloadTable();
+            showInfo("Submitted", "Issue recorded. Thank you.");
+        }
     }
 }

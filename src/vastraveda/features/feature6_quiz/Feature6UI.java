@@ -9,22 +9,14 @@ import java.util.List;
 
 public class Feature6UI extends BaseUI implements Feature {
 
-    private Feature6Service service = new Feature6Service();
-    private List<Feature6Service.Question> questions;
-
-    private int index = 0;
-    private int score = 0;
-    private boolean answered = false;
-
-    private JLabel questionLabel;
-    private JButton[] optionButtons;
-    private JButton nextButton;
+    private final Feature6Service service = new Feature6Service();
+    private int contributions = 0;
+    private JLabel scoreLabel;
+    private JPanel badgePanel;
 
     public Feature6UI() {
-        super("Clothing Quiz");
-        questions = service.getQuestions();
+        super("Heritage Badges");
         buildUI();
-        loadQuestion();
     }
 
     @Override
@@ -34,107 +26,73 @@ public class Feature6UI extends BaseUI implements Feature {
 
     private void buildUI() {
         setLayout(new BorderLayout());
-        add(createHeader("🧠 Clothing Quiz", "Test your knowledge"), BorderLayout.NORTH);
+        add(createHeader("🏅 Clothing Heritage Badges", "Earn recognition as you learn and contribute"), BorderLayout.NORTH);
 
-        JPanel main = new JPanel(new BorderLayout());
-        main.setBackground(COLOR_BG);
-        main.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        questionLabel = new JLabel();
-        questionLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-
-        JPanel optionsPanel = new JPanel(new GridLayout(4, 1, 10, 10));
-        optionsPanel.setBackground(COLOR_BG);
-
-        optionButtons = new JButton[4];
-
-        for (int i = 0; i < 4; i++) {
-            optionButtons[i] = new JButton();
-            optionButtons[i].setFocusPainted(false);
-            int finalI = i;
-
-            optionButtons[i].addActionListener(e -> checkAnswer(optionButtons[finalI]));
-
-            optionsPanel.add(optionButtons[i]);
-        }
-
-        nextButton = new JButton("Next");
-        nextButton.setEnabled(false);
-        nextButton.addActionListener(e -> nextQuestion());
-
-        main.add(questionLabel, BorderLayout.NORTH);
-        main.add(optionsPanel, BorderLayout.CENTER);
-        main.add(nextButton, BorderLayout.SOUTH);
-
-        add(main, BorderLayout.CENTER);
-    }
-
-    private void loadQuestion() {
-        if (index >= questions.size()) {
-            showResult();
-            return;
-        }
-
-        Feature6Service.Question q = questions.get(index);
-
-        questionLabel.setText("Q" + (index + 1) + ": " + q.question);
-
-        for (int i = 0; i < 4; i++) {
-            optionButtons[i].setText(q.options.get(i));
-            optionButtons[i].setBackground(null);
-            optionButtons[i].setEnabled(true);
-        }
-
-        answered = false;
-        nextButton.setEnabled(false);
-    }
-
-    private void checkAnswer(JButton selected) {
-        if (answered) return;
-
-        answered = true;
-        Feature6Service.Question q = questions.get(index);
-
-        for (JButton btn : optionButtons) {
-            btn.setEnabled(false);
-
-            if (btn.getText().equals(q.answer)) {
-                btn.setBackground(Color.GREEN);
-            } else if (btn == selected) {
-                btn.setBackground(Color.RED);
+        JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 12, 10));
+        top.setBackground(new Color(245, 235, 215));
+        top.setBorder(BorderFactory.createEmptyBorder(10, 16, 10, 16));
+        top.add(new JLabel("Profile: Guest Contributor"));
+        scoreLabel = new JLabel("Contributions: 0");
+        scoreLabel.setFont(FONT_LABEL);
+        top.add(scoreLabel);
+        JButton add = createStyledButton("+ Simulate contribution", COLOR_PRIMARY, COLOR_TEXT_LIGHT);
+        add.addActionListener(e -> {
+            contributions++;
+            scoreLabel.setText("Contributions: " + contributions);
+            refreshBadges();
+            if (contributions == 1 || contributions == 5 || contributions == 10 || contributions == 25 || contributions == 50) {
+                JOptionPane.showMessageDialog(this, "New milestone reached — check your badges!", "Badge", JOptionPane.INFORMATION_MESSAGE);
             }
-        }
+        });
+        top.add(add);
+        add(top, BorderLayout.NORTH);
 
-        if (selected.getText().equals(q.answer)) {
-            score++;
-        }
+        badgePanel = new JPanel();
+        badgePanel.setLayout(new BoxLayout(badgePanel, BoxLayout.Y_AXIS));
+        badgePanel.setBackground(COLOR_BG);
+        badgePanel.setBorder(BorderFactory.createEmptyBorder(12, 16, 16, 16));
 
-        nextButton.setEnabled(true);
+        add(new JScrollPane(badgePanel), BorderLayout.CENTER);
+        refreshBadges();
     }
 
-    private void nextQuestion() {
-        index++;
-        loadQuestion();
-    }
+    private void refreshBadges() {
+        badgePanel.removeAll();
+        JLabel hint = new JLabel("<html><body style='width:520px'>Badges unlock when your contribution count crosses each threshold. " +
+            "In a full app this would sync with Issue Tracker, Debates, and Dataset fixes.</body></html>");
+        hint.setFont(FONT_SMALL);
+        hint.setAlignmentX(Component.LEFT_ALIGNMENT);
+        badgePanel.add(hint);
+        badgePanel.add(Box.createVerticalStrut(12));
 
-    private void showResult() {
-        int choice = JOptionPane.showOptionDialog(
-                this,
-                "Your Score: " + score + "/" + questions.size(),
-                "Quiz Completed",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.INFORMATION_MESSAGE,
-                null,
-                new String[]{"Restart", "Close"},
-                "Restart"
-        );
+        List<Feature6Service.Badge> earned = service.earnedBadges(contributions);
+        JLabel sec = new JLabel("Your badges (" + earned.size() + " / " + service.getCatalog().size() + "):");
+        sec.setFont(FONT_LABEL);
+        sec.setAlignmentX(Component.LEFT_ALIGNMENT);
+        badgePanel.add(sec);
+        badgePanel.add(Box.createVerticalStrut(8));
 
-        if (choice == 0) {
-            index = 0;
-            score = 0;
-            loadQuestion();
-        } else {
-            dispose();
+        for (Feature6Service.Badge b : service.getCatalog()) {
+            boolean on = contributions >= b.minContributions;
+            JPanel row = createCard();
+            row.setLayout(new BorderLayout(8, 4));
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 72));
+            row.setAlignmentX(Component.LEFT_ALIGNMENT);
+            row.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(0, 4, 0, 0, on ? COLOR_SECONDARY : COLOR_BORDER),
+                BorderFactory.createEmptyBorder(8, 10, 8, 10)
+            ));
+            JLabel left = new JLabel(b.icon + "  " + b.name + (on ? "  ✓" : "  (locked)"));
+            left.setFont(new Font("Segoe UI", Font.BOLD, 13));
+            left.setForeground(on ? COLOR_TEXT : Color.GRAY);
+            JLabel desc = new JLabel("<html><body style='width:480px'>" + b.description + " — unlock at " + b.minContributions + " contributions.</body></html>");
+            desc.setFont(FONT_SMALL);
+            row.add(left, BorderLayout.NORTH);
+            row.add(desc, BorderLayout.CENTER);
+            badgePanel.add(row);
+            badgePanel.add(Box.createVerticalStrut(6));
         }
+        badgePanel.revalidate();
+        badgePanel.repaint();
     }
 }

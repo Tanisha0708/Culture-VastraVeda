@@ -1,49 +1,51 @@
 package vastraveda.features.feature6_quiz;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+/**
+ * Heritage badges — mock contribution counter + milestone rules.
+ */
 public class Feature6Service {
 
-    public static class Question {
-        public String question;
-        public List<String> options;
-        public String answer;
+    public static final class Badge {
+        public final String id;
+        public final String icon;
+        public final String name;
+        public final String description;
+        public final int minContributions;
 
-        public Question(String q, List<String> o, String a) {
-            question = q;
-            options = o;
-            answer = a;
+        public Badge(String id, String icon, String name, String description, int minContributions) {
+            this.id = id;
+            this.icon = icon;
+            this.name = name;
+            this.description = description;
+            this.minContributions = minContributions;
         }
     }
 
-    public List<Question> getQuestions() {
-        List<Question> list = new ArrayList<>();
+    private final List<Badge> catalog = new ArrayList<>();
 
-        list.add(new Question("Which fabric is known as the 'Fabric of Freedom'?",
-                Arrays.asList("Silk", "Khadi", "Cotton", "Linen"), "Khadi"));
+    public Feature6Service() {
+        catalog.add(new Badge("seed", "🌱", "Thread Explorer", "First contribution recorded", 1));
+        catalog.add(new Badge("loom", "🧵", "Loom Learner", "Five accurate submissions", 5));
+        catalog.add(new Badge("zari", "✨", "Zari Scholar", "Ten contributions", 10));
+        catalog.add(new Badge("heritage", "🏛", "Heritage Keeper", "Twenty-five contributions", 25));
+        catalog.add(new Badge("custodian", "🥻", "Culture Custodian", "Fifty contributions", 50));
+    }
 
-        list.add(new Question("Paithani saree belongs to which state?",
-                Arrays.asList("Gujarat", "Maharashtra", "Punjab", "Kerala"), "Maharashtra"));
+    public List<Badge> getCatalog() {
+        return Collections.unmodifiableList(catalog);
+    }
 
-        list.add(new Question("Bandhani is a type of?",
-                Arrays.asList("Weaving", "Dyeing", "Printing", "Knitting"), "Dyeing"));
-
-        list.add(new Question("Kalamkari is known for?",
-                Arrays.asList("Painting", "Weaving", "Dyeing", "Knitting"), "Painting"));
-
-        list.add(new Question("Which garment is traditionally worn by men?",
-                Arrays.asList("Lehenga", "Dhoti", "Saree", "Salwar"), "Dhoti"));
-
-        list.add(new Question("Banarasi sarees are famous for?",
-                Arrays.asList("Cotton", "Silk", "Wool", "Linen"), "Silk"));
-
-        list.add(new Question("Which state is famous for Bandhani?",
-                Arrays.asList("Rajasthan", "Kerala", "Bihar", "Assam"), "Rajasthan"));
-
-        list.add(new Question("Khadi is made using?",
-                Arrays.asList("Machines", "Hand-spinning", "Chemical process", "Synthetic fibers"),
-                "Hand-spinning"));
-
-        return list;
+    public List<Badge> earnedBadges(int contributions) {
+        List<Badge> out = new ArrayList<>();
+        for (Badge b : catalog) {
+            if (contributions >= b.minContributions) {
+                out.add(b);
+            }
+        }
+        return out;
     }
 }
