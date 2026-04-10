@@ -20,6 +20,10 @@ import vastraveda.features.feature13_designers.Feature13UI;
 import vastraveda.features.feature14_states.Feature14UI;
 import vastraveda.features.feature15_trends.Feature15UI;
 import vastraveda.features.feature16_fabricorigins.Feature16UI;
+import vastraveda.features.feature17_versioncontrol.Feature17UI;
+import vastraveda.features.feature18_outfitsuggest.Feature18UI;
+import vastraveda.features.feature19_fabriccamera.Feature19UI;
+import vastraveda.features.feature20_openapi.Feature20UI;
 
 import javax.swing.*;
 import java.awt.*;
@@ -55,6 +59,10 @@ public class MainApp extends JFrame {
         { "14", "🏛",  "State Profiles",        "Clothing of every Indian state",      "#283593" },
         { "15", "🌟",  "Modern Trends",         "Traditional meets contemporary",      "#880E4F" },
         { "16", "🧭",  "Fabric Origins Tracker","Trace origin & spread across India",  "#1A4D8F" },
+        { "17", "📚",  "Clothing Version Control", "History, diff, rollback (snapshots)", "#5D4037" },
+        { "18", "✨",  "AI Outfit Suggestions",   "Similar outfits by attributes",       "#7B1FA2" },
+        { "19", "📷",  "Fabric Identifier",       "Image + mock fabric classification",  "#00838F" },
+        { "20", "🌐",  "Open Clothing API",       "REST + API key + docs",               "#1565C0" },
     };
 
     public MainApp() {
@@ -102,7 +110,7 @@ public class MainApp extends JFrame {
         // Stats bar
         JPanel stats = new JPanel(new FlowLayout(FlowLayout.RIGHT, 20, 0));
         stats.setOpaque(false);
-        stats.add(makeStat("16", "Features"));
+        stats.add(makeStat("20", "Features"));
         stats.add(makeStat("15", "Garments"));
         stats.add(makeStat("12", "Regions"));
 
@@ -135,7 +143,7 @@ public class MainApp extends JFrame {
 
     // ── Feature Grid ─────────────────────────────────────────────────
     private JScrollPane buildFeatureGrid() {
-        JPanel grid = new JPanel(new GridLayout(4, 4, 14, 14));
+        JPanel grid = new JPanel(new GridLayout(5, 4, 14, 14));
         grid.setBackground(new Color(35, 18, 6));
         grid.setBorder(BorderFactory.createEmptyBorder(18, 22, 18, 22));
 
@@ -254,6 +262,10 @@ public class MainApp extends JFrame {
             case "14": feature = new Feature14UI(); break;
             case "15": feature = new Feature15UI(); break;
             case "16": feature = new Feature16UI(); break;
+            case "17": feature = new Feature17UI(); break;
+            case "18": feature = new Feature18UI(); break;
+            case "19": feature = new Feature19UI(); break;
+            case "20": feature = new Feature20UI(); break;
             default:
                 JOptionPane.showMessageDialog(this,
                     "Feature " + featureNumber + " not yet implemented.",
