@@ -44,9 +44,9 @@ public class MainApp extends JFrame {
     // Format: { "Feature Number", "Icon", "Title", "Short description", "Badge color hex" }
     private static final String[][] FEATURE_META = {
         { "1",  "🗂",  "Regional Directory",   "Browse & filter all garments",        "#8B4513" },
-        { "2",  "🗺",  "Clothing Map",          "Click states to explore regions",     "#C47A1B" },
-        { "3",  "🧵",  "Fabric Explorer",       "Deep dive into Indian textiles",      "#2E7D32" },
-        { "4",  "🗓",  "Festival Calendar",     "Clothing for each festival",          "#1565C0" },
+        { "2",  "🏷",  "Cultural Tagging",      "Tags on items · pills · admin CRUD",  "#C47A1B" },
+        { "3",  "🔄",  "Fabric Substitution",   "Similar fabrics · suggest · moderate", "#2E7D32" },
+        { "4",  "🌐",  "Multilingual Content",  "Contribute · translate · language UI", "#1565C0" },
         { "5",  "🎊",  "Occasion Guide",        "Dress right for every event",         "#6A1B9A" },
         { "6",  "🏅",  "Heritage Badges",       "Gamification — earn milestone badges", "#D84315" },
         { "7",  "🌍",  "Cross-Culture Compare", "Two garments — diff highlighted",     "#4E342E" },
